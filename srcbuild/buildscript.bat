@@ -8,9 +8,9 @@
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 :: Set the ParaView version to build
-set PV_VERSION=v4.2.0
+set PV_VERSION=v4.3.1
 :: Can't build this on Windows from string substitution
-set PV_VERSION2=v4.2
+set PV_VERSION2=v4.3
 set PV_VERSION3=%PV_VERSION:v=%
 
 :: Set the system PATH for Qt and Python
@@ -28,7 +28,7 @@ set PYTHON_DEB=%THIRD_PARTY_LIB%\Python27\libs\python27_d.lib
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 set CMAKE_CMD="C:\Program Files (x86)\CMake 2.8\bin\cmake.exe"
-%CMAKE_CMD% --version 
+%CMAKE_CMD% --version
 
 :: Setup the source and build directories
 
@@ -55,7 +55,7 @@ if not exist %PARAVIEW_SRC% (
 cd %BUILD_DIR%
 
 set BUILD_CONFIG=Release
-set BUILDOPTS=-DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=%BUILD_CONFIG%
+set BUILDOPTS=-DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=%BUILD_CONFIG%
 set PVOPTS=-DPARAVIEW_BUILD_QT_GUI=ON -DPARAVIEW_ENABLE_MATPLOTLIB=ON -DPARAVIEW_ENABLE_PYTHON=ON
 set PYTHON_SETUP=-DPYTHON_DEBUG_LIBRARY:FILEPATH=%PYTHON_DEB% -DPYTHON_INCLUDE_DIR:PATH=%PYTHON_INC% -DPYTHON_LIBRARY:FILEPATH=%PYTHON_LIB%
 set PYOPTS=-DVTK_USE_SYSTEM_PYGMENTS=ON
