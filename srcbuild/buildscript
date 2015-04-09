@@ -3,6 +3,7 @@
 # Script for doing a ParaView source build on Linux/OSX
 #
 # BUILD_THREADS is set in the Jenkins node configuration
+# NODE_LABELS should be set to indicate the OS
 #
 # It should be invoked as
 #   - buildscript [<build-dir>]
@@ -60,6 +61,11 @@ cd ${PARAVIEW_BUILD}
 BUILDOPTS="-DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Release"
 PVOPTS="-DPARAVIEW_BUILD_QT_GUI=ON -DPARAVIEW_ENABLE_MATPLOTLIB=ON -DPARAVIEW_ENABLE_PYTHON=ON"
 
-cmake ${BUILDOPTS} ${PVOPTS} ${SRC_DIR}/${PARAVIEW_SRC}
+if [[ ${NODE_LABELS} == *rhel6* ]]; then
+  SCL_ON_RHEL6="scl enable mantidlibs"
+else
+  SCL_ON_RHEL6="eval"
+fi
 
-make -j ${BUILD_THREADS}
+$SCL_ON_RHEL6 "cmake ${BUILDOPTS} ${PVOPTS} ${SRC_DIR}/${PARAVIEW_SRC}"
+$SCL_ON_RHEL6 "make -j ${BUILD_THREADS}"
