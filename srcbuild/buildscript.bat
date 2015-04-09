@@ -3,8 +3,20 @@
 ::
 :: BUILD_THREADS is set in the Jenkins node configuration
 ::
+:: It should be invoked as
+::   - buildscript.bat <third-party-dir> [<build-dir>]
+:: where
+::   - <third-party-dir> is the root of the cloned third party directory
+::                       expected to have the layout
+::                       <third-party-dir>\lib\win64 and
+::                       <third-party-dir>\include
+::   - <build-dir> is an optional build directory (default=C:\Builds)
+::
 :: This will create a directory for the PARAVIEW_DIR configuration
-:: variable like: C:\Builds\ParaView-X.Y.Z
+:: variable like:
+::
+::   <build-dir>/ParaView-X.Y.Z
+::
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 :: Set the ParaView version to build
@@ -15,7 +27,12 @@ set PV_VERSION3=%PV_VERSION:v=%
 
 :: Set the system PATH for Qt and Python
 
-set THIRD_PARTY=C:\Third_Party
+if not "%~1"=="" (
+  echo "Usage: buildscript.bat <third-party-dir> [<build-dir>]"
+  exit /b 1
+)
+
+set THIRD_PARTY=%1
 set THIRD_PARTY_LIB=%THIRD_PARTY%\lib\win64
 set PATH=%THIRD_PARTY_LIB%;%THIRD_PARTY_LIB%\Python27;%PATH%
 :: Set Python paths since system has hard time figuring this out.
@@ -31,8 +48,14 @@ set CMAKE_CMD="C:\Program Files (x86)\CMake 2.8\bin\cmake.exe"
 %CMAKE_CMD% --version
 
 :: Setup the source and build directories
+if not "%~2"=="" (
+  set BUILD_DIR=C:\Builds\ParaView-%PV_VERSION3%
+) else (
+  set BUILD_DIR=%2\ParaView-%PV_VERSION3%
+)
 
-set BUILD_DIR=C:\Builds\ParaView-%PV_VERSION3%
+
+
 set SRC_DIR=C:\Sources
 if not exist %BUILD_DIR% (
     md %BUILD_DIR%

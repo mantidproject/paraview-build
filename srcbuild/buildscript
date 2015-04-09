@@ -4,11 +4,15 @@
 #
 # BUILD_THREADS is set in the Jenkins node configuration
 #
+# It should be invoked as
+#   - buildscript [<build-dir>]
+# where <build-dir> is an optional build directory (default=$HOME/build)
+#
 # This will create a directory for the PARAVIEW_DIR configuration
 # variable like:
 #
-# OSX:   /Users/builder/build/ParaView-X.Y.Z
-# Linux: /home/builder/build/ParaView-X.Y.Z
+# OSX:   /Users/builder/<build-dir>/ParaView-X.Y.Z
+# Linux: /home/builder/<build-dir>/ParaView-X.Y.Z
 ##############################################################################
 
 # Set the ParaView version to build
@@ -26,7 +30,11 @@ else
 fi
 
 SRC_DIR=${HOME_DIR}/src
-BUILD_DIR=${HOME_DIR}/build
+if [ $# -eq "1" ]; then
+  BUILD_DIR=$1
+else
+  BUILD_DIR=${HOME_DIR}/build
+fi
 
 # Print some things
 cmake --version
