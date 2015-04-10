@@ -27,7 +27,7 @@ set PV_VERSION3=%PV_VERSION:v=%
 
 :: Set the system PATH for Qt and Python
 
-if not "%~1"=="" (
+if "%1"=="" (
   echo "Usage: buildscript.bat <third-party-dir> [<build-dir>]"
   exit /b 1
 )
@@ -48,7 +48,7 @@ set CMAKE_CMD="C:\Program Files (x86)\CMake 2.8\bin\cmake.exe"
 %CMAKE_CMD% --version
 
 :: Setup the source and build directories
-if not "%~2"=="" (
+if "%2"=="" (
   set BUILD_DIR=C:\Builds\ParaView-%PV_VERSION3%
 ) else (
   set BUILD_DIR=%2\ParaView-%PV_VERSION3%
