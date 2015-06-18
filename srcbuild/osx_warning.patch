@@ -1,0 +1,19 @@
+commit 0007b0042c01ade207b924dd2fa39329986a4309
+Author: Bob T. Builder <builder@mavericks-builder.ornl.gov>
+Date:   Thu Jun 18 12:05:38 2015 -0400
+
+    Disable paraview warning.
+
+diff --git a/ParaViewCore/ClientServerCore/Core/vtkProcessModuleInitializePython.h b/ParaViewCore/ClientServerCore/Core/vtkProcessModuleInitializePython.h
+index c007a37..be28ca4 100644
+--- a/ParaViewCore/ClientServerCore/Core/vtkProcessModuleInitializePython.h
++++ b/ParaViewCore/ClientServerCore/Core/vtkProcessModuleInitializePython.h
+@@ -251,7 +251,7 @@ namespace
+         }
+       else
+         {
+-        vtkGenericWarningMacro("Non-app bundle in install directory not supported");
++        //vtkGenericWarningMacro("Non-app bundle in install directory not supported");
+         }
+       }
+     }
