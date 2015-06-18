@@ -78,5 +78,10 @@ else
   SCL_ON_RHEL6="eval"
 fi
 
-$SCL_ON_RHEL6 "cmake ${BUILDOPTS} ${PVOPTS} ${SYSTEM_LIBS} ${SRC_DIR}/${PARAVIEW_SRC}"
+if [[ $(uname) == "Darwin" ]]; then
+  $SCL_ON_RHEL6 "cmake -C ${SCRIPT_DIR}/osx.cmake ${SRC_DIR}/${PARAVIEW_SRC}"
+else
+  $SCL_ON_RHEL6 "cmake ${BUILDOPTS} ${PVOPTS} ${SYSTEM_LIBS} ${SRC_DIR}/${PARAVIEW_SRC}"
+fi
+
 $SCL_ON_RHEL6 "make -j ${BUILD_THREADS}"
