@@ -1,90 +1,130 @@
+@echo off
+setlocal enableextensions enabledelayedexpansion
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Script for doing a ParaView source build on Windows
 ::
 :: BUILD_THREADS is set in the Jenkins node configuration
 ::
 :: It should be invoked as
-::   - buildscript.bat <third-party-dir> [<build-dir>]
+::   - buildscript.bat [<build-dir>]
 :: where
-::   - <third-party-dir> is the root of the cloned third party directory
-::                       expected to have the layout
-::                       <third-party-dir>\lib\win64 and
-::                       <third-party-dir>\include
 ::   - <build-dir> is an optional build directory (default=C:\Builds)
 ::
 :: This will create a directory for the PARAVIEW_DIR configuration
 :: variable like:
 ::
 ::   <build-dir>/ParaView-X.Y.Z
-::
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Set the ParaView version to build
-set PV_VERSION=v4.3.1
-:: Can't build this on Windows from string substitution
-set PV_VERSION2=v4.3
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+set PV_SHA1=b40280a2f274aa27aac707abf9097317f731dcc1
+set PV_SHA1_SHORT=%PV_SHA1:~0,6%
+set PV_VERSION=v4.3.%PV_SHA1_SHORT%
 set PV_VERSION3=%PV_VERSION:v=%
+echo Building ParaView %PV_VERSION%
 
-:: Set the system PATH for Qt and Python
-
-if "%1"=="" (
-  echo "Usage: buildscript.bat <third-party-dir> [<build-dir>]"
-  exit /b 1
-)
-
-set THIRD_PARTY=%1
-set THIRD_PARTY_LIB=%THIRD_PARTY%\lib\win64
-set PATH=%THIRD_PARTY_LIB%;%THIRD_PARTY_LIB%\Python27;%PATH%
-:: Set Python paths since system has hard time figuring this out.
-set PYTHON_LIB=%THIRD_PARTY_LIB%\Python27\libs\python27.lib
-set PYTHON_INC=%THIRD_PARTY%\include\Python27\Include
-set PYTHON_DEB=%THIRD_PARTY_LIB%\Python27\libs\python27_d.lib
-
-:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-:: Print some things for cross-checking
-:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-set CMAKE_CMD="C:\Program Files (x86)\CMake 2.8\bin\cmake.exe"
-%CMAKE_CMD% --version
-
-:: Setup the source and build directories
-if "%2"=="" (
-  set BUILD_DIR=C:\Builds\ParaView-%PV_VERSION3%
-) else (
-  set BUILD_DIR=%2\ParaView-%PV_VERSION3%
-)
-
-
-
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: Set locations for sources and build
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 set SRC_DIR=C:\Sources
-if not exist %BUILD_DIR% (
-    md %BUILD_DIR%
+if not exist %SRC_DIR% do mkdir %SRC_DIR%
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: Find Git
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+for %%X in (git.cmd) do (set FOUND=%%~$PATH:X)
+if defined FOUND (
+  set GitCmd=git.cmd
+) else (
+    for %%X in (git.exe) do (set FOUND=%%~$PATH:X)
+    if defined FOUND (
+        set GitCmd=!FOUND!
+    ) else (
+        echo Cannot find git. Make sure the cmd folder is in your path.
+        exit /B 1
+    )
 )
 
-if not exist %SRC_DIR% (
-    md %SRC_DIR%
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: Fetch/Update 3rd party
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+set THIRD_PARTY=%SRC_DIR%\Third_Party
+if not exist %THIRD_PARTY% mkdir %THIRD_PARTY%
+
+set MANTID_GIT_ROOT=git://github.com/mantidproject
+:: Includes
+if EXIST %THIRD_PARTY%\include (
+  call:update-includes
+) else (
+  call:clone-includes
+)
+::Libraries
+if EXIST %THIRD_PARTY%\lib (
+  call:update-libs
+) else (
+  call:clone-libs
 )
 
-:: Grab source package and unpack
-cd %SRC_DIR%
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: Fetch ParaView
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 set PARAVIEW_SRC=ParaView-%PV_VERSION%-source
-if not exist %PARAVIEW_SRC% (
-  "C:\Program Files\cURL\bin\curl.exe" -O http://www.paraview.org/files/%PV_VERSION2%/%PARAVIEW_SRC%.tar.gz
-  "C:\Program Files\7-Zip\7z.exe" x -y %PARAVIEW_SRC%.tar.gz
-  "C:\Program Files\7-Zip\7z.exe" x -y %PARAVIEW_SRC%.tar
+call:fetch-paraview
+
+:: done
+goto:eof
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: Helper blocks
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:update-includes
+echo Updating third party includes in '%THIRD_PARTY%\include'
+set PWD=%CD%
+cd /D %THIRD_PARTY%\include
+call "%GitCmd%" pull
+cd /D %PWD%
+goto:eof
+
+:clone-includes
+set INCS_URL=%MANTID_GIT_ROOT%/3rdpartyincludes
+echo Fetching third party includes from '%INCS_URL%' to '%THIRD_PARTY%\include'
+set PWD=%CD%
+cd /D %THIRD_PARTY%
+call "%GitCmd%" clone --depth=1 %INCS_URL% include
+cd /D %PWD%
+goto:eof
+
+:update-libs
+echo Updating third party libraries in '%THIRD_PARTY%\lib'
+set PWD=%CD%
+cd /D %THIRD_PARTY%\lib
+call "%GitCmd%" pull
+cd /D %PWD%
+goto:eof
+
+:clone-libs
+set LIBS_URL=%MANTID_GIT_ROOT%/3rdpartylibs-win64
+echo Fetching third party libraries from '%LIBS_URL%' to '%THIRD_PARTY%\lib'
+set PWD=%CD%
+cd /D %THIRD_PARTY%
+call "%GitCmd%" clone --depth=1 %LIBS_URL% lib
+cd /D %PWD%
+goto:eof
+
+:fetch-paraview
+set PV_GIT_URL=git://paraview.org/ParaView.git
+echo Fetching ParaView from '%PV_GIT_URL%' to '%SRC_DIR%\%PARAVIEW_SRC%'
+set PWD=%CD%
+cd /D %SRC_DIR%
+if not EXIST %SRC_DIR%\%PARAVIEW_SRC% (
+  call "%GitCmd%" clone %PV_GIT_URL% %PARAVIEW_SRC%
 )
+cd %PARAVIEW_SRC%
+call "%GitCmd%" checkout %PV_SHA1%
+call "%GitCmd%" submodule init
+call "%GitCmd%" submodule update
+cd /D %PWD%
+goto:eof
 
-:: Go to build area, setup and run
-cd %BUILD_DIR%
-
-set BUILD_CONFIG=Release
-set BUILDOPTS=-DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=%BUILD_CONFIG%
-set PVOPTS=-DPARAVIEW_BUILD_QT_GUI=ON -DPARAVIEW_ENABLE_MATPLOTLIB=ON -DPARAVIEW_ENABLE_PYTHON=ON
-set PYTHON_SETUP=-DPYTHON_DEBUG_LIBRARY:FILEPATH=%PYTHON_DEB% -DPYTHON_INCLUDE_DIR:PATH=%PYTHON_INC% -DPYTHON_LIBRARY:FILEPATH=%PYTHON_LIB%
-set PYOPTS=-DVTK_USE_SYSTEM_PYGMENTS=ON
-
-%CMAKE_CMD% -G "Visual Studio 11 Win64" %BUILDOPTS% %PVOPTS% %PYTHON_SETUP% %PYOPTS% %SRC_DIR%\%PARAVIEW_SRC%
-if ERRORLEVEL 1 exit /B %ERRORLEVEL%
-
-msbuild /nologo /m:%BUILD_THREADS% /nr:false /p:Configuration=%BUILD_CONFIG% ParaView.sln
-if ERRORLEVEL 1 exit /B %ERRORLEVEL%
