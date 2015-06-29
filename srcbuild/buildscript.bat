@@ -16,6 +16,8 @@ setlocal enableextensions enabledelayedexpansion
 ::   <build-dir>/ParaView-X.Y.Z
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
+set SCRIPT_DIR=%~dp0
+
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Set the ParaView version to build
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -50,22 +52,13 @@ if defined FOUND (
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Fetch/Update 3rd party
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-set THIRD_PARTY=%SRC_DIR%\Third_Party
-if not exist %THIRD_PARTY% mkdir %THIRD_PARTY%
+:: This variables is required by the msvc.cmake file
+set MANTID_THIRD_PARTY=%SRC_DIR%\Third_Party
+if not exist %MANTID_THIRD_PARTY% mkdir %MANTID_THIRD_PARTY%
 
 set MANTID_GIT_ROOT=git://github.com/mantidproject
-:: Includes
-if EXIST %THIRD_PARTY%\include (
-  call:update-includes
-) else (
-  call:clone-includes
-)
-::Libraries
-if EXIST %THIRD_PARTY%\lib (
-  call:update-libs
-) else (
-  call:clone-libs
-)
+call:fetch-includes
+call:fetch-libs
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Fetch ParaView
@@ -73,43 +66,64 @@ if EXIST %THIRD_PARTY%\lib (
 set PARAVIEW_SRC=ParaView-%PV_VERSION%-source
 call:fetch-paraview
 
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: Build ParaView
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: Set path for Third party to find python & qmake.exe
+set THIRD_PARTY_LIB=%MANTID_THIRD_PARTY%\lib\win64
+set PATH=%THIRD_PARTY_LIB%;%THIRD_PARTY_LIB%\Python27;%PATH%
+
+set BUILD_DIR=C:\Builds
+if not EXIST %BUILD_DIR% mkdir %BUILD_DIR%
+cd /D %BUILD_DIR%
+set PV_BUILD_DIR=ParaView-%PV_VERSION3%
+if not EXIST %PV_BUILD_DIR% mkdir %PV_BUILD_DIR%
+cd %PV_BUILD_DIR%
+
+set CACHE_FILE=%SCRIPT_DIR%msvc.cmake
+echo Using CMake cache file '%CACHE_FILE%'
+set CMAKE_CMD="C:\Program Files (x86)\CMake 2.8\bin\cmake.exe"
+%CMAKE_CMD% --version
+
+::Configure
+%CMAKE_CMD% -G "Visual Studio 11 Win64" -C%CACHE_FILE% %SRC_DIR%\%PARAVIEW_SRC%
+if ERRORLEVEL 1 exit /B %ERRORLEVEL%
+
+::Build
+msbuild /nologo /m:%BUILD_THREADS% /nr:false /p:Configuration=Release ParaView.sln
+if ERRORLEVEL 1 exit /B %ERRORLEVEL%
+
 :: done
 goto:eof
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Helper blocks
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-:update-includes
-echo Updating third party includes in '%THIRD_PARTY%\include'
-set PWD=%CD%
-cd /D %THIRD_PARTY%\include
-call "%GitCmd%" pull
-cd /D %PWD%
-goto:eof
-
-:clone-includes
+:fetch-includes
 set INCS_URL=%MANTID_GIT_ROOT%/3rdpartyincludes
-echo Fetching third party includes from '%INCS_URL%' to '%THIRD_PARTY%\include'
+echo Fetching third party includes from '%INCS_URL%' to '%MANTID_THIRD_PARTY%\include'
 set PWD=%CD%
-cd /D %THIRD_PARTY%
-call "%GitCmd%" clone --depth=1 %INCS_URL% include
+cd /D %MANTID_THIRD_PARTY%
+if not EXIST %MANTID_THIRD_PARTY%\include (
+  call "%GitCmd%" clone --depth=1 %INCS_URL% include
+) else (
+  cd include
+  call "%GitCmd%" pull
+)
 cd /D %PWD%
 goto:eof
 
-:update-libs
-echo Updating third party libraries in '%THIRD_PARTY%\lib'
-set PWD=%CD%
-cd /D %THIRD_PARTY%\lib
-call "%GitCmd%" pull
-cd /D %PWD%
-goto:eof
-
-:clone-libs
+:fetch-libs
 set LIBS_URL=%MANTID_GIT_ROOT%/3rdpartylibs-win64
-echo Fetching third party libraries from '%LIBS_URL%' to '%THIRD_PARTY%\lib'
+echo Fetching third party libraries from '%LIBS_URL%' to '%MANTID_THIRD_PARTY%\lib\win64'
 set PWD=%CD%
-cd /D %THIRD_PARTY%
-call "%GitCmd%" clone --depth=1 %LIBS_URL% lib
+cd /D %MANTID_THIRD_PARTY%
+if not EXIST %MANTID_THIRD_PARTY%\lib\win64 (
+  call "%GitCmd%" clone --depth=1 %LIBS_URL% lib\win64
+) else (
+  cd lib\win64
+  call "%GitCmd%" pull
+)
 cd /D %PWD%
 goto:eof
 
@@ -120,8 +134,11 @@ set PWD=%CD%
 cd /D %SRC_DIR%
 if not EXIST %SRC_DIR%\%PARAVIEW_SRC% (
   call "%GitCmd%" clone %PV_GIT_URL% %PARAVIEW_SRC%
+  cd %PARAVIEW_SRC%
+) else (
+  cd %PARAVIEW_SRC%
+  call "%GitCmd%" fetch
 )
-cd %PARAVIEW_SRC%
 call "%GitCmd%" checkout %PV_SHA1%
 call "%GitCmd%" submodule init
 call "%GitCmd%" submodule update
