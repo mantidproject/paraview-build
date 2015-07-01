@@ -58,10 +58,6 @@ if [[ ! -d ${PARAVIEW_SRC} ]]; then
  git submodule update
 fi
 
-if [[ $(uname) == "Darwin" ]]; then
-  git apply ${SCRIPT_DIR}/osx_warning.patch
-fi
-
 # Go to build area, setup and run
 cd ${BUILD_DIR}
 PARAVIEW_BUILD=ParaView-${PV_VERSION3}
