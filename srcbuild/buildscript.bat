@@ -80,7 +80,7 @@ set PV_BUILD_DIR=ParaView-%PV_VERSION3%
 if not EXIST %PV_BUILD_DIR% mkdir %PV_BUILD_DIR%
 cd %PV_BUILD_DIR%
 
-set CACHE_FILE=%SCRIPT_DIR%msvc.cmake
+set CACHE_FILE=%SCRIPT_DIR%msvc-2012.cmake
 echo Using CMake cache file '%CACHE_FILE%'
 set CMAKE_CMD="C:\Program Files (x86)\CMake 2.8\bin\cmake.exe"
 %CMAKE_CMD% --version
