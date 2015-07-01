@@ -66,7 +66,7 @@ cd ${PARAVIEW_BUILD}
 
 COMMON_CACHE_FILE=${SCRIPT_DIR}/common.cmake
 OSX_CACHE_FILE=${SCRIPT_DIR}/osx.cmake
-LINUX_CACHE_FILE=${SCRIPT_DIR}/osx.cmake
+LINUX_CACHE_FILE=${SCRIPT_DIR}/linux.cmake
 
 if [[ ${NODE_LABELS} == *rhel6* ]]; then
   SCL_ON_RHEL6="scl enable mantidlibs34"
