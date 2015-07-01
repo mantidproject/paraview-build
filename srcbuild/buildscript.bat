@@ -90,7 +90,8 @@ set CMAKE_CMD="C:\Program Files (x86)\CMake 2.8\bin\cmake.exe"
 if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 
 ::Build
-msbuild /nologo /m:%BUILD_THREADS% /nr:false /p:Configuration=Release ParaView.sln
+if not DEFINED BUILD_THREADS set BUILD_THREADS=1
+msbuild /nologo /m:!BUILD_THREADS! /nr:false /p:Configuration=Release ParaView.sln
 if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 
 :: done
