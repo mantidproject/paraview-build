@@ -80,13 +80,14 @@ set PV_BUILD_DIR=ParaView-%PV_VERSION3%
 if not EXIST %PV_BUILD_DIR% mkdir %PV_BUILD_DIR%
 cd %PV_BUILD_DIR%
 
-set CACHE_FILE=%SCRIPT_DIR%msvc-2012.cmake
+set COMMON_CACHE_FILE=%SCRIPT_DIR%common.cmake
+set WINDOWS_CACHE_FILE=%SCRIPT_DIR%msvc-2012.cmake
 echo Using CMake cache file '%CACHE_FILE%'
 set CMAKE_CMD="C:\Program Files (x86)\CMake 2.8\bin\cmake.exe"
 %CMAKE_CMD% --version
 
 ::Configure
-%CMAKE_CMD% -G "Visual Studio 11 Win64" -C%CACHE_FILE% %SRC_DIR%\%PARAVIEW_SRC%
+%CMAKE_CMD% -G "Visual Studio 11 Win64" -C%COMMON_CACHE_FILE% -C%WINDOWS_CACHE_FILE% %SRC_DIR%\%PARAVIEW_SRC%
 if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 
 ::Build
