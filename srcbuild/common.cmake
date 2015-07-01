@@ -16,6 +16,5 @@ set (PARAVIEW_ENABLE_PYTHON ON CACHE BOOL "")
 # System libraries
 ###############################################################################
 set (VTK_USE_SYSTEM_HDF5 ON CACHE BOOL "")
-set (VTK_USE_SYSTEM_JPEG OFF CACHE BOOL "")
 set (VTK_USE_SYSTEM_ZLIB ON CACHE BOOL "")
 
