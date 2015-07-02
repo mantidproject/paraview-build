@@ -132,10 +132,9 @@ goto:eof
 :fetch-paraview
 set PV_GIT_URL=git://paraview.org/ParaView.git
 echo Fetching ParaView from '%PV_GIT_URL%' to '%SRC_DIR%\%PARAVIEW_SRC%'
-call "%GitCmd%" --global url."http://paraview.org".insteadOf git://paraview.org
-call "%GitCmd%" --global url."http://public.kitware.com".insteadOf git://public.kitware.com
-call "%GitCmd%" --global url."http://vtk.org".insteadOf git://vtk.org
-
+call "%GitCmd%" config --global url."http://paraview.org".insteadOf git://paraview.org
+call "%GitCmd%" config --global url."http://public.kitware.com".insteadOf git://public.kitware.com
+call "%GitCmd%" config --global url."http://vtk.org".insteadOf git://vtk.org
 set PWD=%CD%
 cd /D %SRC_DIR%
 if not EXIST %SRC_DIR%\%PARAVIEW_SRC% (
