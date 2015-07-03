@@ -121,6 +121,7 @@ echo Fetching third party libraries from '%LIBS_URL%' to '%MANTID_THIRD_PARTY%\l
 set PWD=%CD%
 cd /D %MANTID_THIRD_PARTY%
 if not EXIST %MANTID_THIRD_PARTY%\lib\win64 (
+  mkdir %MANTID_THIRD_PARTY%\lib
   call "%GitCmd%" clone --depth=1 %LIBS_URL% lib\win64
 ) else (
   cd lib\win64
