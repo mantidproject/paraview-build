@@ -3,7 +3,7 @@
 ###############################################################################
 set (BUILD_TESTING OFF CACHE BOOL "")
 set (BUILD_EXAMPLES OFF CACHE BOOL "")
-set (CMAKE_BUILD_TYPE Release CACHE BOOL "")
+set (CMAKE_BUILD_TYPE Release CACHE STRING "")
 
 ###############################################################################
 # ParaView components
