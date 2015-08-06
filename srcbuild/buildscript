@@ -57,7 +57,7 @@ if [[ ! -d ${PARAVIEW_SRC} ]]; then
  git submodule init
  git submodule update
  cd VTK
- git apply ${SCRIPT_DIR}/vtkStructureGridPatch.txt
+ git apply ${SCRIPT_DIR}/vtkStructuredGridPatch.txt
  cd ..
 fi
 
