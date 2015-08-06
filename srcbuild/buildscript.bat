@@ -149,6 +149,8 @@ if not EXIST %SRC_DIR%\%PARAVIEW_SRC% (
 call "%GitCmd%" checkout %PV_SHA1%
 call "%GitCmd%" submodule init
 call "%GitCmd%" submodule update
+cd /D VTK
+call "%GitCMD%" apply ${SCRIPT_DIR}/vtkStructuredGridPatch.txt
 cd /D %PWD%
 goto:eof
 

@@ -56,6 +56,9 @@ if [[ ! -d ${PARAVIEW_SRC} ]]; then
  git checkout b40280a2f274aa27aac707abf9097317f731dcc1
  git submodule init
  git submodule update
+ cd VTK
+ git apply ${SCRIPT_DIR}/vtkStructureGridPatch.txt
+ cd ..
 fi
 
 # Go to build area, setup and run
