@@ -132,11 +132,8 @@ cd /D %PWD%
 goto:eof
 
 :fetch-paraview
-set PV_GIT_URL=git://paraview.org/ParaView.git
+set PV_GIT_URL=https://gitlab.kitware.com/paraview/paraview.git
 echo Fetching ParaView from '%PV_GIT_URL%' to '%SRC_DIR%\%PARAVIEW_SRC%'
-call "%GitCmd%" config --global url."http://paraview.org".insteadOf git://paraview.org
-call "%GitCmd%" config --global url."http://public.kitware.com".insteadOf git://public.kitware.com
-call "%GitCmd%" config --global url."http://vtk.org".insteadOf git://vtk.org
 set PWD=%CD%
 cd /D %SRC_DIR%
 if not EXIST %SRC_DIR%\%PARAVIEW_SRC% (
@@ -149,11 +146,14 @@ if not EXIST %SRC_DIR%\%PARAVIEW_SRC% (
 call "%GitCmd%" checkout %PV_SHA1%
 call "%GitCmd%" submodule init
 call "%GitCmd%" submodule update
+#remove any changes from previous patches
+call "%GitCmd%" reset --hard
+call "%GitCmd%" submodule foreach git reset --hard
 cd /D VTK
 call "%GitCMD%" apply ${SCRIPT_DIR}/vtkStructuredGridPatch.txt
-call "%GitCMD%" apply ${SCRIPT_DIR}/0001-Fix-interaction-in-vtkPVOrthographicSliceView.patch
-call "%GitCMD%" apply ${SCRIPT_DIR}/0002-Added-ShallowCopy-methods-to-vtkGridAxes3DActor-vtkP.patch
-call "%GitCMD%" apply ${SCRIPT_DIR}/0003-Added-GridAxes-to-the-3-orthographic-views.patch
 cd /D %PWD%
+git apply ${SCRIPT_DIR}/0001-Fix-interaction-in-vtkPVOrthographicSliceView.patch
+git apply ${SCRIPT_DIR}/0002-Added-ShallowCopy-methods-to-vtkGridAxes3DActor-vtkP.patch
+git apply ${SCRIPT_DIR}/0003-Added-GridAxes-to-the-3-orthographic-views.patch
 goto:eof
 

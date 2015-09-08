@@ -51,7 +51,7 @@ cmake --version
 cd ${SRC_DIR}
 PARAVIEW_SRC=ParaView-${PV_VERSION}-source
 if [[ ! -d ${PARAVIEW_SRC} ]]; then
- git clone git://paraview.org/ParaView.git ${PARAVIEW_SRC}
+ git clone https://gitlab.kitware.com/paraview/paraview.git ${PARAVIEW_SRC}
  cd ${PARAVIEW_SRC}
 else
  cd ${PARAVIEW_SRC}
