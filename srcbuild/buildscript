@@ -51,12 +51,22 @@ cmake --version
 cd ${SRC_DIR}
 PARAVIEW_SRC=ParaView-${PV_VERSION}-source
 if [[ ! -d ${PARAVIEW_SRC} ]]; then
- git clone git://paraview.org/ParaView.git ${PARAVIEW_SRC}
+ git clone https://gitlab.kitware.com/paraview/paraview.git ${PARAVIEW_SRC}
  cd ${PARAVIEW_SRC}
- git checkout b40280a2f274aa27aac707abf9097317f731dcc1
- git submodule init
- git submodule update
+else
+ cd ${PARAVIEW_SRC}
+ git fetch -p -t
 fi
+git checkout b40280a2f274aa27aac707abf9097317f731dcc1
+git submodule update --init --recursive
+#remove any changes from previous patches
+git reset --hard
+git submodule foreach git reset --hard
+cd VTK
+git cherry-pick 72b9f62ee6231b3a1afc982d295f92d13297fc62
+cd ..
+git cherry-pick acda54cbc1985585a87a9e0a58a6d1da0623a40f dd2e33d6db155c9f1476fb224fe5e4f866bfedf0 fe40cbfe532fd6e419530bdc83f8d8eeae28967c
+cd ..
 
 # Go to build area, setup and run
 cd ${BUILD_DIR}

@@ -132,11 +132,8 @@ cd /D %PWD%
 goto:eof
 
 :fetch-paraview
-set PV_GIT_URL=git://paraview.org/ParaView.git
+set PV_GIT_URL=https://gitlab.kitware.com/paraview/paraview.git
 echo Fetching ParaView from '%PV_GIT_URL%' to '%SRC_DIR%\%PARAVIEW_SRC%'
-call "%GitCmd%" config --global url."http://paraview.org".insteadOf git://paraview.org
-call "%GitCmd%" config --global url."http://public.kitware.com".insteadOf git://public.kitware.com
-call "%GitCmd%" config --global url."http://vtk.org".insteadOf git://vtk.org
 set PWD=%CD%
 cd /D %SRC_DIR%
 if not EXIST %SRC_DIR%\%PARAVIEW_SRC% (
@@ -147,8 +144,13 @@ if not EXIST %SRC_DIR%\%PARAVIEW_SRC% (
   call "%GitCmd%" fetch
 )
 call "%GitCmd%" checkout %PV_SHA1%
-call "%GitCmd%" submodule init
-call "%GitCmd%" submodule update
+call "%GitCmd%" submodule update --init --recursive
+#remove any changes from previous patches
+call "%GitCmd%" reset --hard
+call "%GitCmd%" submodule foreach git reset --hard
+cd /D VTK
+call "%GitCMD%" cherry-pick 72b9f62ee6231b3a1afc982d295f92d13297fc62
 cd /D %PWD%
+call "%GitCMD%" cherry-pick acda54cbc1985585a87a9e0a58a6d1da0623a40f dd2e33d6db155c9f1476fb224fe5e4f866bfedf0 fe40cbfe532fd6e419530bdc83f8d8eeae28967c
 goto:eof
 
