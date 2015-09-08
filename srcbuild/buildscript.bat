@@ -151,6 +151,9 @@ call "%GitCmd%" submodule init
 call "%GitCmd%" submodule update
 cd /D VTK
 call "%GitCMD%" apply ${SCRIPT_DIR}/vtkStructuredGridPatch.txt
+call "%GitCMD%" apply ${SCRIPT_DIR}/0001-Fix-interaction-in-vtkPVOrthographicSliceView.patch
+call "%GitCMD%" apply ${SCRIPT_DIR}/0002-Added-ShallowCopy-methods-to-vtkGridAxes3DActor-vtkP.patch
+call "%GitCMD%" apply ${SCRIPT_DIR}/0003-Added-GridAxes-to-the-3-orthographic-views.patch
 cd /D %PWD%
 goto:eof
 
