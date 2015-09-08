@@ -144,16 +144,15 @@ if not EXIST %SRC_DIR%\%PARAVIEW_SRC% (
   call "%GitCmd%" fetch
 )
 call "%GitCmd%" checkout %PV_SHA1%
-call "%GitCmd%" submodule init
-call "%GitCmd%" submodule update
+call "%GitCmd%" submodule update --init --recursive
 #remove any changes from previous patches
 call "%GitCmd%" reset --hard
 call "%GitCmd%" submodule foreach git reset --hard
 cd /D VTK
-call "%GitCMD%" apply ${SCRIPT_DIR}/vtkStructuredGridPatch.txt
+call "%GitCMD%" cherry-pick 72b9f62ee6231b3a1afc982d295f92d13297fc62
 cd /D %PWD%
-git apply ${SCRIPT_DIR}/0001-Fix-interaction-in-vtkPVOrthographicSliceView.patch
-git apply ${SCRIPT_DIR}/0002-Added-ShallowCopy-methods-to-vtkGridAxes3DActor-vtkP.patch
-git apply ${SCRIPT_DIR}/0003-Added-GridAxes-to-the-3-orthographic-views.patch
+call "%GitCMD%" cherry-pick acda54cbc1985585a87a9e0a58a6d1da0623a40f dd2e33d6db155c9f1476fb224fe5e4f866bfedf0 fe40cbfe532fd6e419530bdc83f8d8eeae28967c
 goto:eof
+
+
 
