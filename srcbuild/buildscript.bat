@@ -154,5 +154,3 @@ cd /D %PWD%
 call "%GitCMD%" cherry-pick acda54cbc1985585a87a9e0a58a6d1da0623a40f dd2e33d6db155c9f1476fb224fe5e4f866bfedf0 fe40cbfe532fd6e419530bdc83f8d8eeae28967c
 goto:eof
 
-
-
