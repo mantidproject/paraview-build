@@ -141,7 +141,7 @@ if not EXIST %SRC_DIR%\%PARAVIEW_SRC% (
   cd %PARAVIEW_SRC%
 ) else (
   cd %PARAVIEW_SRC%
-  call "%GitCmd%" fetch
+  call "%GitCmd%" fetch -p -t --recurse-submodules=yes
 )
 call "%GitCmd%" checkout %PV_SHA1%
 call "%GitCmd%" submodule update --init --recursive
