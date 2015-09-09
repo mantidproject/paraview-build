@@ -55,7 +55,7 @@ if [[ ! -d ${PARAVIEW_SRC} ]]; then
  cd ${PARAVIEW_SRC}
 else
  cd ${PARAVIEW_SRC}
- git fetch -p -t
+ git fetch -p -t --recurse-submodules=yes
 fi
 git checkout b40280a2f274aa27aac707abf9097317f731dcc1
 git submodule update --init --recursive
