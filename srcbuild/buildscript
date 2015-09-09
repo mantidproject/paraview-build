@@ -60,8 +60,8 @@ else
  git fetch -p
  git fetch -t
  # RHEL6 has git 1.7 that doesn't know about submodule recursion
- git submodule foreach fetch -p
- git submodule foreach fetch -t
+ git submodule foreach git fetch -p
+ git submodule foreach git fetch -t
 fi
 git checkout b40280a2f274aa27aac707abf9097317f731dcc1
 git submodule update --init --recursive
