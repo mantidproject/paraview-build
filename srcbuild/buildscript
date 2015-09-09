@@ -56,7 +56,7 @@ if [[ ! -d ${PARAVIEW_SRC} ]]; then
 else
  cd ${PARAVIEW_SRC}
  # Update paraview branches && tags
- # Tags need to be separate as git < 1.9 fetches only tags with -t 
+ # Tags need to be separate as git < 1.9 fetches only tags with -t
  git fetch -p
  git fetch -t
  # RHEL6 has git 1.7 that doesn't know about submodule recursion
@@ -75,7 +75,10 @@ git cherry-pick 72b9f62ee6231b3a1afc982d295f92d13297fc62
 cd ..
 git config user.name "Bob T. Builder"
 git config user.email "builder@ornl.gov"
-git cherry-pick acda54cbc1985585a87a9e0a58a6d1da0623a40f dd2e33d6db155c9f1476fb224fe5e4f866bfedf0 fe40cbfe532fd6e419530bdc83f8d8eeae28967c
+# git 1.7.1 (rhel6) only supports a single commit for cherry-pick
+git cherry-pick acda54cbc1985585a87a9e0a58a6d1da0623a40f
+git cherry-pick dd2e33d6db155c9f1476fb224fe5e4f866bfedf0
+git cherry-pick fe40cbfe532fd6e419530bdc83f8d8eeae28967c
 cd ..
 
 # Go to build area, setup and run
