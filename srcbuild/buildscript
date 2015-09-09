@@ -18,7 +18,7 @@
 
 #get script directory
 SCRIPT_DIR=$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd)
- 
+
 # Set the ParaView version to build
 PV_VERSION=v4.3.b40280
 PV_VERSION2=${PV_VERSION%.*}
@@ -55,7 +55,9 @@ if [[ ! -d ${PARAVIEW_SRC} ]]; then
  cd ${PARAVIEW_SRC}
 else
  cd ${PARAVIEW_SRC}
- git fetch -p -t --recurse-submodules=yes
+ git fetch -p --recurse-submodules=yes
+ # Do tags separately as pre v1.9 git fetch -t only retrieved tags
+ git fetch -t --recurse-submodules=yes
 fi
 git checkout b40280a2f274aa27aac707abf9097317f731dcc1
 git submodule update --init --recursive
