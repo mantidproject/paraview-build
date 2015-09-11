@@ -150,12 +150,13 @@ call "%GitCmd%" submodule update --init --recursive
 :: remove any changes from previous patches
 call "%GitCmd%" reset --hard
 call "%GitCmd%" submodule foreach git reset --hard
-cd /D VTK
+cd VTK
 call "%GitCmd%" config user.name "Bob T. Builder"
 call "%GitCmd%" config user.email "builder@ornl.gov"
 call "%GitCmf%" cherry-pick 72b9f62ee6231b3a1afc982d295f92d13297fc62
-cd /D %PWD%
+cd ..
 call "%GitCmd%" config user.name "Bob T. Builder"
 call "%GitCmd%" config user.email "builder@ornl.gov"
 call "%GitCmd%" cherry-pick acda54cbc1985585a87a9e0a58a6d1da0623a40f dd2e33d6db155c9f1476fb224fe5e4f866bfedf0 fe40cbfe532fd6e419530bdc83f8d8eeae28967c
+cd /D %PWD%
 goto:eof
