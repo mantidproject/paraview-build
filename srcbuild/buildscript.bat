@@ -140,8 +140,8 @@ if not EXIST %SRC_DIR%\%PARAVIEW_SRC% (
   call "%GitCmd%" clone %PV_GIT_URL% %PARAVIEW_SRC%
   cd %PARAVIEW_SRC%
 ) else (
-  rmdir /S /Q C:\Sources\ParaView-v4.3.b40280-source
-  call "%GitCmd%" clone %PV_GIT_URL% %PARAVIEW_SRC%
+  :: rmdir /S /Q C:\Sources\ParaView-v4.3.b40280-source
+  :: call "%GitCmd%" clone %PV_GIT_URL% %PARAVIEW_SRC%
   cd %PARAVIEW_SRC%
   :: call "%GitCmd%" fetch -p --recurse-submodules=yes
   :: :: Do tags separately as pre v1.9 git fetch -t only retrieved tags
