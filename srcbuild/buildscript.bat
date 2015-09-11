@@ -144,6 +144,9 @@ if not EXIST %SRC_DIR%\%PARAVIEW_SRC% (
   call "%GitCmd%" clone %PV_GIT_URL% %PARAVIEW_SRC%
   cd %PARAVIEW_SRC%
 )
+call "%GitCmd%" config --global url."http://paraview.org".insteadOf git://paraview.org
+call "%GitCmd%" config --global url."http://public.kitware.com".insteadOf git://public.kitware.com
+call "%GitCmd%" config --global url."http://vtk.org".insteadOf git://vtk.org
 call "%GitCmd%" checkout %PV_SHA1%
 call "%GitCmd%" submodule update --init --recursive
 :: remove any changes from previous patches
