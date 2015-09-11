@@ -140,10 +140,12 @@ if not EXIST %SRC_DIR%\%PARAVIEW_SRC% (
   call "%GitCmd%" clone %PV_GIT_URL% %PARAVIEW_SRC%
   cd %PARAVIEW_SRC%
 ) else (
+  rmdir %SRC_DIR%\%PARAVIEW_SRC% /s /q
+  call "%GitCmd%" clone %PV_GIT_URL% %PARAVIEW_SRC%
   cd %PARAVIEW_SRC%
-  call "%GitCmd%" fetch -p --recurse-submodules=yes
-  :: Do tags separately as pre v1.9 git fetch -t only retrieved tags
-  call "%GitCmd%" fetch -p -t --recurse-submodules=yes
+  :: call "%GitCmd%" fetch -p --recurse-submodules=yes
+  :: :: Do tags separately as pre v1.9 git fetch -t only retrieved tags
+  :: call "%GitCmd%" fetch -p -t --recurse-submodules=yes
 )
 call "%GitCmd%" checkout %PV_SHA1%
 call "%GitCmd%" submodule update --init --recursive
