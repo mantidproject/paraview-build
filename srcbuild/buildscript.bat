@@ -140,7 +140,7 @@ if not EXIST %SRC_DIR%\%PARAVIEW_SRC% (
   call "%GitCmd%" clone %PV_GIT_URL% %PARAVIEW_SRC%
   cd %PARAVIEW_SRC%
 ) else (
-  rmdir %SRC_DIR%\%PARAVIEW_SRC% /s /q
+  rmdir C:\Sources\ParaView-v4.3.b40280-source /s /q
   call "%GitCmd%" clone %PV_GIT_URL% %PARAVIEW_SRC%
   cd %PARAVIEW_SRC%
   :: call "%GitCmd%" fetch -p --recurse-submodules=yes
