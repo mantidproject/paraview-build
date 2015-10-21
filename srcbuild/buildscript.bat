@@ -6,14 +6,12 @@ setlocal enableextensions enabledelayedexpansion
 :: BUILD_THREADS is set in the Jenkins node configuration
 ::
 :: It should be invoked as
-::   - buildscript.bat [<build-dir>]
-:: where
-::   - <build-dir> is an optional build directory (default=C:\Builds)
+::   - buildscript.bat [third-party-dir]
 ::
 :: This will create a directory for the PARAVIEW_DIR configuration
 :: variable like:
 ::
-::   <build-dir>/ParaView-X.Y.Z
+::   ~d0\Builds\ParaView-X.Y.Z
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 set SCRIPT_DIR=%~dp0
@@ -28,10 +26,15 @@ set PV_VERSION3=%PV_VERSION:v=%
 echo Building ParaView %PV_VERSION%
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: Setup visual studio
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+@call "%VS140COMNTOOLS%\..\..\VC\vcvarsall.bat" amd64
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Set locations for sources and build
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-set SRC_DIR=C:\Sources
-if not exist %SRC_DIR% do mkdir %SRC_DIR%
+set SRC_DIR=%~d0\Sources
+if not exist %SRC_DIR% (mkdir %SRC_DIR%)
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Find Git
@@ -53,12 +56,13 @@ if defined FOUND (
 :: Fetch/Update 3rd party
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: This variables is required by the msvc.cmake file
-set MANTID_THIRD_PARTY=%SRC_DIR%\Third_Party
-if not exist %MANTID_THIRD_PARTY% mkdir %MANTID_THIRD_PARTY%
-
-set MANTID_GIT_ROOT=git://github.com/mantidproject
-call:fetch-includes
-call:fetch-libs
+if "%1"=="" (
+  set MANTID_THIRD_PARTY=%SRC_DIR%\Third_Party
+  if not exist %MANTID_THIRD_PARTY% do mkdir %MANTID_THIRD_PARTY%
+  call:fetch-thirdparty
+) else (
+  set MANTID_THIRD_PARTY=%1
+)
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Fetch ParaView
@@ -67,13 +71,19 @@ set PARAVIEW_SRC=ParaView-%PV_VERSION%-source
 call:fetch-paraview
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: Apply patches not yet in ParaView source
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+cd %SRC_DIR%\%PARAVIEW_SRC%
+"%GitCmd%" apply %SCRIPT_DIR%\patches\paraview-msvc2015.patch
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Build ParaView
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Set path for Third party to find python & qmake.exe
-set THIRD_PARTY_LIB=%MANTID_THIRD_PARTY%\lib\win64
-set PATH=%THIRD_PARTY_LIB%;%THIRD_PARTY_LIB%\Python27;%PATH%
+set THIRD_PARTY_LIB=!MANTID_THIRD_PARTY!\lib
+set PATH=!MANTID_THIRD_PARTY!\bin;!THIRD_PARTY_LIB!\qt4\bin;!THIRD_PARTY_LIB!\python2.7;%PATH%
 
-set BUILD_DIR=C:\Builds
+set BUILD_DIR=%~d0\Builds
 if not EXIST %BUILD_DIR% mkdir %BUILD_DIR%
 cd /D %BUILD_DIR%
 set PV_BUILD_DIR=ParaView-%PV_VERSION3%
@@ -81,18 +91,18 @@ if not EXIST %PV_BUILD_DIR% mkdir %PV_BUILD_DIR%
 cd %PV_BUILD_DIR%
 
 set COMMON_CACHE_FILE=%SCRIPT_DIR%common.cmake
-set WINDOWS_CACHE_FILE=%SCRIPT_DIR%msvc-2012.cmake
+set WINDOWS_CACHE_FILE=%SCRIPT_DIR%msvc-2015.cmake
 echo Using CMake cache file '%CACHE_FILE%'
-set CMAKE_CMD="C:\Program Files (x86)\CMake 2.8\bin\cmake.exe"
+set CMAKE_CMD="C:\Program Files (x86)\CMake\bin\cmake.exe"
 %CMAKE_CMD% --version
 
 ::Configure
-%CMAKE_CMD% -G "Visual Studio 11 Win64" -C%COMMON_CACHE_FILE% -C%WINDOWS_CACHE_FILE% %SRC_DIR%\%PARAVIEW_SRC%
+%CMAKE_CMD% -G "Visual Studio 14 2015 Win64" -C%COMMON_CACHE_FILE% -C%WINDOWS_CACHE_FILE% %SRC_DIR%\%PARAVIEW_SRC%
 if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 
 ::Build
-if not DEFINED BUILD_THREADS set BUILD_THREADS=1
-msbuild /nologo /m:!BUILD_THREADS! /nr:false /p:Configuration=Release ParaView.sln
+if not DEFINED BUILD_THREADS set BUILD_THREADS=8
+msbuild /nologo /m:!BUILD_THREADS! /nr:false /p:Configuration=Release ALL_BUILD.vcxproj
 if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 
 :: done
@@ -101,34 +111,9 @@ goto:eof
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Helper blocks
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-:fetch-includes
-set INCS_URL=%MANTID_GIT_ROOT%/3rdpartyincludes
-echo Fetching third party includes from '%INCS_URL%' to '%MANTID_THIRD_PARTY%\include'
-set PWD=%CD%
-cd /D %MANTID_THIRD_PARTY%
-if not EXIST %MANTID_THIRD_PARTY%\include (
-  call "%GitCmd%" clone --depth=1 %INCS_URL% include
-) else (
-  cd include
-  call "%GitCmd%" pull
-)
-cd /D %PWD%
-goto:eof
-
-:fetch-libs
-set LIBS_URL=%MANTID_GIT_ROOT%/3rdpartylibs-win64
-echo Fetching third party libraries from '%LIBS_URL%' to '%MANTID_THIRD_PARTY%\lib\win64'
-set PWD=%CD%
-cd /D %MANTID_THIRD_PARTY%
-if not EXIST %MANTID_THIRD_PARTY%\lib mkdir %MANTID_THIRD_PARTY%\lib
-cd %MANTID_THIRD_PARTY%\lib
-if not EXIST %MANTID_THIRD_PARTY%\lib\win64 (
-  call "%GitCmd%" clone --depth=1 %LIBS_URL% win64
-) else (
-  cd win64
-  call "%GitCmd%" pull
-)
-cd /D %PWD%
+:fetch-thirdparty
+echo Fetching third party not implemented yet!!
+exit /b 1
 goto:eof
 
 :fetch-paraview
@@ -136,26 +121,28 @@ set PV_GIT_URL=https://gitlab.kitware.com/paraview/paraview.git
 echo Fetching ParaView from '%PV_GIT_URL%' to '%SRC_DIR%\%PARAVIEW_SRC%'
 set PWD=%CD%
 cd /D %SRC_DIR%
-if not EXIST %SRC_DIR%\%PARAVIEW_SRC% (
-  call "%GitCmd%" clone %PV_GIT_URL% %PARAVIEW_SRC%
+if EXIST %SRC_DIR%\%PARAVIEW_SRC% (
   cd %PARAVIEW_SRC%
+  :: remove any changes from previous patches
+  call "%GitCmd%" reset --hard
+  call "%GitCmd%" submodule foreach git reset --hard
 ) else (
-  rmdir /S /Q %SRC_DIR%\%PARAVIEW_SRC%
   call "%GitCmd%" clone %PV_GIT_URL% %PARAVIEW_SRC%
   cd %PARAVIEW_SRC%
 )
+
 call "%GitCmd%" config --global url."http://paraview.org".insteadOf git://paraview.org
 call "%GitCmd%" config --global url."http://public.kitware.com".insteadOf git://public.kitware.com
 call "%GitCmd%" config --global url."http://vtk.org".insteadOf git://vtk.org
-call "%GitCmd%" checkout %PV_SHA1%
 call "%GitCmd%" submodule update --init --recursive
-:: remove any changes from previous patches
-call "%GitCmd%" reset --hard
-call "%GitCmd%" submodule foreach git reset --hard
+call "%GitCmd%" checkout %PV_SHA1%
 cd VTK
 call "%GitCmd%" config user.name "Bob T. Builder"
 call "%GitCmd%" config user.email "builder@ornl.gov"
-call "%GitCmf%" cherry-pick 72b9f62ee6231b3a1afc982d295f92d13297fc62
+call "%GitCmd%" cherry-pick 72b9f62ee6231b3a1afc982d295f92d13297fc62
+:: The following commits are purely for VS2015 support
+call "%GitCmd%" cherry-pick -m 1 baae0322cc2beec0d68a6807f5769721ed2c4a19
+call "%GitCmd%" cherry-pick ea06eda9f11a7ec0d212f44bc30b5ec5dc74f304
 cd ..
 call "%GitCmd%" config user.name "Bob T. Builder"
 call "%GitCmd%" config user.email "builder@ornl.gov"
