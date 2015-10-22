@@ -16,6 +16,7 @@ setlocal enableextensions enabledelayedexpansion
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 set SCRIPT_DIR=%~dp0
+set MANTID_THIRD_PARTY=%1
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Set the ParaView version to build
@@ -37,7 +38,7 @@ call "%VS140COMNTOOLS%\..\..\VC\vcvarsall.bat" amd64
 :: Set locations for sources and build
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 set SRC_DIR=%~d0\Sources
-if not exist %SRC_DIR% (mkdir %SRC_DIR%)
+if not exist %SRC_DIR% mkdir %SRC_DIR%
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Find Git
@@ -59,13 +60,11 @@ if defined FOUND (
 :: Fetch/Update 3rd party
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: MANTID_THIRD_PARTY is required by the msvc.cmake file
-cd %SRC_DIR%
-if "%1"=="" (
-  set MANTID_THIRD_PARTY=%SRC_DIR%\Third_Party-%BUILD_DIR_SUFFIX%
-  if not exist %MANTID_THIRD_PARTY% do mkdir %MANTID_THIRD_PARTY%
-  call:fetch-thirdparty %MANTID_THIRD_PARTY%
-) else (
-  set MANTID_THIRD_PARTY=%1
+cd /d %SRC_DIR%
+if "%MANTID_THIRD_PARTY%" == "" (
+  set MANTID_THIRD_PARTY=%SRC_DIR%\thirdparty%BUILD_DIR_SUFFIX%
+  if not exist !MANTID_THIRD_PARTY! mkdir !MANTID_THIRD_PARTY!
+  call:fetch-thirdparty !MANTID_THIRD_PARTY!
 )
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -116,7 +115,7 @@ goto:eof
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :fetch-thirdparty
 set TP_DEST_DIR=%1
-set TP_GIT_URL=https://github.com/mantidproject/third-party-msvc2015.git
+set TP_GIT_URL=https://github.com/mantidproject/thirdparty-msvc2015.git
 if not exist %TP_DEST_DIR%\.git (
   call "%GitCmd%" clone %TP_GIT_URL% %TP_DEST_DIR%
 ) else (
