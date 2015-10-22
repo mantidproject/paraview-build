@@ -1,7 +1,8 @@
 @echo off
 setlocal enableextensions enabledelayedexpansion
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-:: Script for doing a ParaView source build on Windows
+:: Script for doing a ParaView source build on Windows. It assumes cmake
+:: is installed and on the PATH
 ::
 :: BUILD_THREADS is set in the Jenkins node configuration
 ::
@@ -28,7 +29,9 @@ echo Building ParaView %PV_VERSION%
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Setup visual studio
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-@call "%VS140COMNTOOLS%\..\..\VC\vcvarsall.bat" amd64
+set CMAKE_GENERATOR=Visual Studio 14 2015 Win64
+set BUILD_DIR_SUFFIX=-msvc2015
+call "%VS140COMNTOOLS%\..\..\VC\vcvarsall.bat" amd64
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Set locations for sources and build
@@ -55,11 +58,12 @@ if defined FOUND (
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Fetch/Update 3rd party
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-:: This variables is required by the msvc.cmake file
+:: MANTID_THIRD_PARTY is required by the msvc.cmake file
+cd %SRC_DIR%
 if "%1"=="" (
-  set MANTID_THIRD_PARTY=%SRC_DIR%\Third_Party
+  set MANTID_THIRD_PARTY=%SRC_DIR%\Third_Party-%BUILD_DIR_SUFFIX%
   if not exist %MANTID_THIRD_PARTY% do mkdir %MANTID_THIRD_PARTY%
-  call:fetch-thirdparty
+  call:fetch-thirdparty %MANTID_THIRD_PARTY%
 ) else (
   set MANTID_THIRD_PARTY=%1
 )
@@ -86,18 +90,17 @@ set PATH=!MANTID_THIRD_PARTY!\bin;!THIRD_PARTY_LIB!\qt4\bin;!THIRD_PARTY_LIB!\py
 set BUILD_DIR=%~d0\Builds
 if not EXIST %BUILD_DIR% mkdir %BUILD_DIR%
 cd /D %BUILD_DIR%
-set PV_BUILD_DIR=ParaView-%PV_VERSION3%
+set PV_BUILD_DIR=ParaView-%PV_VERSION3%%BUILD_DIR_SUFFIX%
 if not EXIST %PV_BUILD_DIR% mkdir %PV_BUILD_DIR%
 cd %PV_BUILD_DIR%
 
 set COMMON_CACHE_FILE=%SCRIPT_DIR%common.cmake
 set WINDOWS_CACHE_FILE=%SCRIPT_DIR%msvc-2015.cmake
 echo Using CMake cache file '%CACHE_FILE%'
-set CMAKE_CMD="C:\Program Files (x86)\CMake\bin\cmake.exe"
-%CMAKE_CMD% --version
+cmake --version
 
 ::Configure
-%CMAKE_CMD% -G "Visual Studio 14 2015 Win64" -C%COMMON_CACHE_FILE% -C%WINDOWS_CACHE_FILE% %SRC_DIR%\%PARAVIEW_SRC%
+cmake -G "@CMAKE_GENERATOR@" -C%COMMON_CACHE_FILE% -C%WINDOWS_CACHE_FILE% %SRC_DIR%\%PARAVIEW_SRC%
 if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 
 ::Build
@@ -112,8 +115,13 @@ goto:eof
 :: Helper blocks
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :fetch-thirdparty
-echo Fetching third party not implemented yet!!
-exit /b 1
+set TP_DEST_DIR=%1
+set TP_GIT_URL=https://github.com/mantidproject/third-party-msvc2015.git
+if not exist %TP_DEST_DIR%\.git (
+  call "%GitCmd%" clone %TP_GIT_URL% %TP_DEST_DIR%
+) else (
+  call "%GitCmd%" pull --rebase
+)
 goto:eof
 
 :fetch-paraview
