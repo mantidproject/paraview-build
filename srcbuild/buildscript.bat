@@ -119,6 +119,7 @@ set TP_GIT_URL=https://github.com/mantidproject/thirdparty-msvc2015.git
 set _curdir=%CD%
 if not exist %TP_DEST_DIR%\.git (
   call "%GitCmd%" clone %TP_GIT_URL% %TP_DEST_DIR%
+  cd /D %TP_DEST_DIR%
 ) else (
   cd /D %TP_DEST_DIR%
   call "%GitCmd%" pull --rebase
