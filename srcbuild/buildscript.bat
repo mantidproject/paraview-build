@@ -125,6 +125,7 @@ if not exist %TP_DEST_DIR%\.git (
   call "%GitCmd%" pull --rebase
 )
 call "%GitCmd%" lfs pull master
+call "%GitCmd%" lfs checkout
 cd %_curdir%
 goto:eof
 
