@@ -58,10 +58,3 @@ index b3fa1bf..20f8c65 100644
    _set_output_format(oldWin32ExponentFormat);
  #endif
  
-diff --git a/VTK b/VTK
-index 33ba83a..69af6fc 160000
---- a/VTK
-+++ b/VTK
-@@ -1 +1 @@
--Subproject commit 33ba83aeda4e6d83240c5b8f127fba250b51cb1b
-+Subproject commit 69af6fc41594c2eadcc0b152f977d9be61059fb6
