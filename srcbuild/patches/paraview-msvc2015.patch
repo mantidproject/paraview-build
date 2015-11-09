@@ -1,0 +1,60 @@
+diff --git a/ParaViewCore/VTKExtensions/Default/vtkPEnSightReader.cxx b/ParaViewCore/VTKExtensions/Default/vtkPEnSightReader.cxx
+index 22631a6..a1bad96 100644
+--- a/ParaViewCore/VTKExtensions/Default/vtkPEnSightReader.cxx
++++ b/ParaViewCore/VTKExtensions/Default/vtkPEnSightReader.cxx
+@@ -1622,11 +1622,12 @@ int vtkPEnSightReader::ReadVariableFiles(vtkMultiBlockDataSet *output)
+           fileNum = 1;
+           for (j = 1; j < numStepsList->GetNumberOfIds(); j++)
+             {
+-            numSteps += numStepsList->GetId(j);
++            int curNumSteps = numStepsList->GetId(j);
++            numSteps += curNumSteps;
+             if (timeStep > numSteps)
+               {
+               fileNum++;
+-              timeStepInFile -= numStepsList->GetId(j);
++              timeStepInFile -= curNumSteps;
+               }
+             }
+           }
+@@ -1766,11 +1767,12 @@ int vtkPEnSightReader::ReadVariableFiles(vtkMultiBlockDataSet *output)
+           fileNum = 1;
+           for (j = 1; j < numStepsList->GetNumberOfIds(); j++)
+             {
+-            numSteps += numStepsList->GetId(j);
++            int curNumSteps = numStepsList->GetId(j);
++            numSteps += curNumSteps;
+             if (timeStep > numSteps)
+               {
+               fileNum++;
+-              timeStepInFile -= numStepsList->GetId(j);
++              timeStepInFile -= curNumSteps;
+               }
+             }
+           }
+diff --git a/ParaViewCore/VTKExtensions/Rendering/vtkPVScalarBarActor.cxx b/ParaViewCore/VTKExtensions/Rendering/vtkPVScalarBarActor.cxx
+index b3fa1bf..20f8c65 100644
+--- a/ParaViewCore/VTKExtensions/Rendering/vtkPVScalarBarActor.cxx
++++ b/ParaViewCore/VTKExtensions/Rendering/vtkPVScalarBarActor.cxx
+@@ -212,10 +212,10 @@ int vtkPVScalarBarActor::CreateLabel(
+     textActor->ComputeScaledFont(this->P->Viewport);
+     }
+ 
+-  // One Windows, formats with exponents have three digits by default
++  // One Visual Studio prior 2015, formats with exponents have three digits by default
+   // whereas on other systems, exponents have two digits. Set to two
+   // digits on Windows for consistent behavior.
+-#ifdef _WIN32
++#if defined(_MSV_VER) && (_MSC_VER < 1900)
+   unsigned int oldWin32ExponentFormat = _set_output_format(_TWO_DIGIT_EXPONENT);
+ #endif
+ 
+@@ -276,7 +276,7 @@ int vtkPVScalarBarActor::CreateLabel(
+   // Set the txt label
+   textActor->SetInput(string);
+ 
+-#ifdef _WIN32
++#if defined(_MSV_VER) && (_MSC_VER < 1900)
+   _set_output_format(oldWin32ExponentFormat);
+ #endif
+ 
