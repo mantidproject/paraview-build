@@ -11,6 +11,7 @@ set (CMAKE_BUILD_TYPE Release CACHE STRING "")
 set (PARAVIEW_BUILD_QT_GUI ON CACHE BOOL "")
 set (PARAVIEW_ENABLE_MATPLOTLIB ON CACHE BOOL "")
 set (PARAVIEW_ENABLE_PYTHON ON CACHE BOOL "")
+set (VTK_RENDERING_BACKEND OpenGL2 CACHE STRING "")
 
 ###############################################################################
 # System libraries

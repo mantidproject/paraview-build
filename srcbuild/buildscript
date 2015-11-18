@@ -20,7 +20,7 @@
 SCRIPT_DIR=$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd)
 
 # Set the ParaView version to build
-PV_VERSION=v4.3.b40280
+PV_VERSION=v5.0.0-RC1
 PV_VERSION2=${PV_VERSION%.*}
 PV_VERSION3=${PV_VERSION/v/}
 
@@ -63,23 +63,11 @@ else
  git submodule foreach git fetch -p
  git submodule foreach git fetch -t
 fi
-git checkout b40280a2f274aa27aac707abf9097317f731dcc1
+git checkout ${PV_VERSION}
 git submodule update --init --recursive
 #remove any changes from previous patches
 git reset --hard
 git submodule foreach git reset --hard
-cd VTK
-git config user.name "Bob T. Builder"
-git config user.email "builder@ornl.gov"
-git cherry-pick 72b9f62ee6231b3a1afc982d295f92d13297fc62
-cd ..
-git config user.name "Bob T. Builder"
-git config user.email "builder@ornl.gov"
-# git 1.7.1 (rhel6) only supports a single commit for cherry-pick
-git cherry-pick acda54cbc1985585a87a9e0a58a6d1da0623a40f
-git cherry-pick dd2e33d6db155c9f1476fb224fe5e4f866bfedf0
-git cherry-pick fe40cbfe532fd6e419530bdc83f8d8eeae28967c
-cd ..
 
 # Go to build area, setup and run
 cd ${BUILD_DIR}

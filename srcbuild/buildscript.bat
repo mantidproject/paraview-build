@@ -21,9 +21,7 @@ set MANTID_THIRD_PARTY=%1
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Set the ParaView version to build
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-set PV_SHA1=b40280a2f274aa27aac707abf9097317f731dcc1
-set PV_SHA1_SHORT=%PV_SHA1:~0,6%
-set PV_VERSION=v4.3.%PV_SHA1_SHORT%
+set PV_VERSION=v5.0.0-RC1
 set PV_VERSION3=%PV_VERSION:v=%
 echo Building ParaView %PV_VERSION%
 
@@ -148,17 +146,6 @@ call "%GitCmd%" config --global url."http://paraview.org".insteadOf git://paravi
 call "%GitCmd%" config --global url."http://public.kitware.com".insteadOf git://public.kitware.com
 call "%GitCmd%" config --global url."http://vtk.org".insteadOf git://vtk.org
 call "%GitCmd%" submodule update --init --recursive
-call "%GitCmd%" checkout %PV_SHA1%
-cd VTK
-call "%GitCmd%" config user.name "Bob T. Builder"
-call "%GitCmd%" config user.email "builder@ornl.gov"
-call "%GitCmd%" cherry-pick 72b9f62ee6231b3a1afc982d295f92d13297fc62
-:: The following commits are purely for VS2015 support
-call "%GitCmd%" cherry-pick -m 1 baae0322cc2beec0d68a6807f5769721ed2c4a19
-call "%GitCmd%" cherry-pick ea06eda9f11a7ec0d212f44bc30b5ec5dc74f304
-cd ..
-call "%GitCmd%" config user.name "Bob T. Builder"
-call "%GitCmd%" config user.email "builder@ornl.gov"
-call "%GitCmd%" cherry-pick acda54cbc1985585a87a9e0a58a6d1da0623a40f dd2e33d6db155c9f1476fb224fe5e4f866bfedf0 fe40cbfe532fd6e419530bdc83f8d8eeae28967c
+call "%GitCmd%" checkout %PV_VERSION%
 cd /D %PWD%
 goto:eof
