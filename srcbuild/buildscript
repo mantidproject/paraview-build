@@ -44,8 +44,8 @@ fi
 cmake --version
 
 # Setup directories if they don't exist.
-[[ -d ${SRC_DIR} ]] || mkdir ${SRC_DIR}
-[[ -d ${BUILD_DIR} ]] || mkdir ${BUILD_DIR}
+[[ -d ${SRC_DIR} ]] || mkdir -p ${SRC_DIR}
+[[ -d ${BUILD_DIR} ]] || mkdir -p ${BUILD_DIR}
 
 # Grab source package and unpack
 cd ${SRC_DIR}
