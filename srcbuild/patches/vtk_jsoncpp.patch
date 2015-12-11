@@ -30,7 +30,7 @@ index ac6fd52..4c94ad1 100644
  #else
  // Needed for Windows declspec import logic
 -# if defined(_WIN32) && defined(VTK_BUILD_SHARED_LIBS)
-+# if !defined(JSON_DLL) && defined(_WIN32) && defined(VTK_BUILD_SHARED_LIBS))
++# if !defined(JSON_DLL) && defined(_WIN32) && defined(VTK_BUILD_SHARED_LIBS)
  #  define JSON_DLL
  # endif
  # include <vtkjsoncpp/json/json.h>
