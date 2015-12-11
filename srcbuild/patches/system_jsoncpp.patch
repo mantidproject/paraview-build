@@ -1,0 +1,48 @@
+From b4c8e91e2657724a65a69fedbc8cc9882b5eebb3 Mon Sep 17 00:00:00 2001
+From: Steven Hahn <hahnse@ornl.gov>
+Date: Wed, 9 Dec 2015 16:00:43 -0500
+Subject: [PATCH] Add user option to select a shared/static system JsonCpp library.
+
+---
+ ThirdParty/jsoncpp/CMakeLists.txt   | 4 ++++
+ ThirdParty/jsoncpp/vtk_jsoncpp.h.in | 7 ++++++-
+ 2 files changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/ThirdParty/jsoncpp/CMakeLists.txt b/ThirdParty/jsoncpp/CMakeLists.txt
+index a892e8c..f05c303 100644
+--- a/ThirdParty/jsoncpp/CMakeLists.txt
++++ b/ThirdParty/jsoncpp/CMakeLists.txt
+@@ -1,2 +1,6 @@
+ vtk_module_third_party(JsonCpp
+   VERSION 0.7.0)
++if (WIN32 AND VTK_USE_SYSTEM_JSONCPP)
++  option(VTK_SYSTEM_JSONCPP_SHARED "System-installed JsonCpp package is a shared library" OFF)
++  mark_as_advanced(VTK_SYSTEM_JSONCPP_SHARED)
++endif()
+diff --git a/ThirdParty/jsoncpp/vtk_jsoncpp.h.in b/ThirdParty/jsoncpp/vtk_jsoncpp.h.in
+index ac6fd52..f9b8a0d 100644
+--- a/ThirdParty/jsoncpp/vtk_jsoncpp.h.in
++++ b/ThirdParty/jsoncpp/vtk_jsoncpp.h.in
+@@ -18,13 +18,18 @@
+ /* Use the JsonCpp library configured for VTK.  */
+ #cmakedefine VTK_USE_SYSTEM_JSONCPP
+ #ifdef VTK_USE_SYSTEM_JSONCPP
++#cmakedefine VTK_SYSTEM_JSONCPP_SHARED
++// Needed for Windows declspec import logic
++# if !defined(JSON_DLL) && defined(_WIN32) && defined(VTK_SYSTEM_JSONCPP_SHARED)
++#  define JSON_DLL
++# endif
+ # include <json/json.h>
+ # ifndef JSON_FORWARDS_H_INCLUDED
+ #  error Incorrect header included, check your include paths for conflicts
+ # endif
+ #else
+ // Needed for Windows declspec import logic
+-# if defined(_WIN32) && defined(VTK_BUILD_SHARED_LIBS)
++# if !defined(JSON_DLL) && defined(_WIN32) && defined(VTK_BUILD_SHARED_LIBS)
+ #  define JSON_DLL
+ # endif
+ # include <vtkjsoncpp/json/json.h>
+--
+libgit2 0.22.2
+
