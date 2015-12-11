@@ -75,7 +75,7 @@ call:fetch-paraview
 :: Apply patches not yet in ParaView source 
 :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: 
 cd %SRC_DIR%\%PARAVIEW_SRC%\VTK 
-"%GitCmd%" apply %SCRIPT_DIR%\patches\paraview_jsoncpp.patch
+"%GitCmd%" apply --ignore-space-change --ignore-whitespace %SCRIPT_DIR%\patches\paraview_jsoncpp.patch
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Build ParaView
