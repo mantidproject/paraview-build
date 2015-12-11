@@ -28,6 +28,10 @@ set (PYTHON_LIBRARY ${PYTHON_DIR}/libs/python27.lib CACHE FILEPATH "")
 # # zlib
 set (ZLIB_INCLUDE_DIR ${BASE_INCLUDE_DIR} CACHE PATH "")
 set (ZLIB_LIBRARY ${BASE_LIB_DIR}/zlib.lib CACHE FILEPATH "")
+# # jsoncpp
+set (JSONCPP_INCLUDE_DIR ${BASE_INCLUDE_DIR} CACHE PATH "")
+set (JSONCPP_LIBRARY ${BASE_LIB_DIR}/jsoncpp.lib CACHE FILEPATH "")
+set (JSONCPP_LIBRARY_DEBUG ${BASE_LIB_DIR}/jsoncpp_d.lib CACHE FILEPATH "")
 # # hdf5
 set (HDF5_INCLUDE_DIRS "${BASE_INCLUDE_DIR}" CACHE PATH "")
 set (HDF5_C_LIBRARY ${BASE_LIB_DIR}/hdf5.lib CACHE FILEPATH "")
@@ -41,6 +45,7 @@ set (HDF5_LIBRARIES "${HDF5_C_LIBRARY};${HDF5_HL_LIBRARY};${HDF5_CXX_LIBRARY};${
 ###############################################################################
 # We don't ship jpeg with Windows.
 set (VTK_USE_SYSTEM_JPEG OFF CACHE BOOL "")
-# There is currently a linker problem with jsoncpp. Try again when we move versions of MSVC
-set (VTK_USE_SYSTEM_JSONCPP OFF CACHE BOOL "")
+# Specify shared system jsoncpp library. 
+set (VTK_USE_SYSTEM_JSONCPP ON CACHE BOOL "")
+set (VTK_SYSTEM_JSONCPP_SHARED ON CACHE BOOL "")
 
