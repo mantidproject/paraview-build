@@ -69,7 +69,7 @@ git submodule update --init --recursive
 git reset --hard
 git submodule foreach git reset --hard
 cd VTK
-git apply ${SCRIPT_DIR}/vtk_netcdf4.patch
+git apply ${SCRIPT_DIR}/patches/vtk_netcdf4.patch
 
 # Go to build area, setup and run
 cd ${BUILD_DIR}
