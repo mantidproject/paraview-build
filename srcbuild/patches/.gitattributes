@@ -1,1 +1,2 @@
 paraview-msvc2015.patch       text=set eol=lf
+vtk_jsoncpp.patch             text=set eol=lf
