@@ -71,9 +71,11 @@ if "%MANTID_THIRD_PARTY%" == "" (
 set PARAVIEW_SRC=ParaView-%PV_VERSION%-source
 call:fetch-paraview
 
-:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: 
-:: Apply patches not yet in ParaView source 
-:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: 
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:: Apply patches not yet in ParaView source
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+cd %SRC_DIR%\%PARAVIEW_SRC%\VTK
+"%GitCmd%" apply %SCRIPT_DIR%\patches\vtk_matplotlib.patch
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Build ParaView
