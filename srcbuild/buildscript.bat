@@ -76,6 +76,7 @@ call:fetch-paraview
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 cd %SRC_DIR%\%PARAVIEW_SRC%\VTK
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\vtk_matplotlib.patch
+if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Build ParaView
