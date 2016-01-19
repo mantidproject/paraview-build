@@ -75,7 +75,7 @@ call:fetch-paraview
 :: Apply patches not yet in ParaView source
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 cd %SRC_DIR%\%PARAVIEW_SRC%\VTK
-"%GitCmd%" apply %SCRIPT_DIR%\patches\vtk_matplotlib.patch
+"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\vtk_matplotlib.patch
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Build ParaView
