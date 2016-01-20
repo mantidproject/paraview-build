@@ -89,7 +89,13 @@ set BUILD_DIR=%~d0\Builds
 if not EXIST %BUILD_DIR% mkdir %BUILD_DIR%
 cd /D %BUILD_DIR%
 set PV_BUILD_DIR=ParaView-%PV_VERSION3%
-if not EXIST %PV_BUILD_DIR% mkdir %PV_BUILD_DIR%
+if not EXIST %PV_BUILD_DIR% (
+  mkdir %PV_BUILD_DIR%
+) else (
+  if not "%CLEAN%" == "%CLEAN:true=%" (
+    rmdir /S /Q %PV_BUILD_DIR%
+  )
+)
 cd %PV_BUILD_DIR%
 
 set COMMON_CACHE_FILE=%SCRIPT_DIR%common.cmake
