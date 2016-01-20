@@ -93,6 +93,7 @@ if not EXIST %PV_BUILD_DIR% (
   mkdir %PV_BUILD_DIR%
 ) else (
   if not "%CLEAN%" == "%CLEAN:true=%" (
+    echo Removing %PV_BUILD_DIR% 
     rmdir /S /Q %PV_BUILD_DIR%
   )
 )
@@ -100,7 +101,7 @@ cd %PV_BUILD_DIR%
 
 set COMMON_CACHE_FILE=%SCRIPT_DIR%common.cmake
 set WINDOWS_CACHE_FILE=%SCRIPT_DIR%msvc-2015.cmake
-echo Using CMake cache file '%CACHE_FILE%'
+echo Using CMake cache files '%COMMON_CACHE_FILE%' '%WINDOWS_CACHE_FILE%'
 cmake --version
 
 ::Configure
