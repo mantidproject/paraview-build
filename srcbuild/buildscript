@@ -75,6 +75,10 @@ git apply ${SCRIPT_DIR}/patches/vtk_matplotlib.patch
 # Go to build area, setup and run
 cd ${BUILD_DIR}
 PARAVIEW_BUILD=ParaView-${PV_VERSION3}
+if [[ "$CLEAN" == true ]]; then
+  echo "Clean build requested. Removing '$PARAVIEW_BUILD'"
+  rm -rf $PARAVIEW_BUILD
+fi
 [[ -d ${PARAVIEW_BUILD} ]] || mkdir ${PARAVIEW_BUILD}
 cd ${PARAVIEW_BUILD}
 
