@@ -21,8 +21,7 @@ set MANTID_THIRD_PARTY=%1
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Set the ParaView version to build
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-set PV_VERSION=v5.0.0
-set PV_VERSION3=%PV_VERSION:v=%
+set PV_VERSION=master
 echo Building ParaView %PV_VERSION%
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -89,7 +88,7 @@ set BUILD_DIR=%~d0\Builds
 if not EXIST %BUILD_DIR% mkdir %BUILD_DIR%
 cd /D %BUILD_DIR%
 
-set PV_BUILD_DIR=ParaView-%PV_VERSION3%
+set PV_BUILD_DIR=ParaView-%PV_VERSION%
 if not "%CLEAN%" == "%CLEAN:true=%" (
   echo Removing %PV_BUILD_DIR% 
   rmdir /S /Q %PV_BUILD_DIR%

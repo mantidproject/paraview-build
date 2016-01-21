@@ -20,9 +20,7 @@
 SCRIPT_DIR=$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd)
 
 # Set the ParaView version to build
-PV_VERSION=v5.0.0
-PV_VERSION2=${PV_VERSION%.*}
-PV_VERSION3=${PV_VERSION/v/}
+PV_VERSION=master
 
 # Set the source and build directories
 BUILDER=builder
@@ -74,7 +72,7 @@ git apply ${SCRIPT_DIR}/patches/vtk_matplotlib.patch
 
 # Go to build area, setup and run
 cd ${BUILD_DIR}
-PARAVIEW_BUILD=ParaView-${PV_VERSION3}
+PARAVIEW_BUILD=ParaView-${PV_VERSION}
 if [[ "$CLEAN" == true ]]; then
   echo "Clean build requested. Removing '$PARAVIEW_BUILD'"
   rm -rf $PARAVIEW_BUILD
