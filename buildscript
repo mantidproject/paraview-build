@@ -62,10 +62,11 @@ else
  git submodule foreach git fetch -t
 fi
 git checkout ${PV_VERSION}
-git submodule update --init --recursive
 #remove any changes from previous patches
 git reset --hard
 git submodule foreach git reset --hard
+git pull --rebase origin master
+git submodule update --init --recursive
 cd VTK
 git apply ${SCRIPT_DIR}/patches/vtk_netcdf4.patch
 git apply ${SCRIPT_DIR}/patches/vtk_matplotlib.patch
