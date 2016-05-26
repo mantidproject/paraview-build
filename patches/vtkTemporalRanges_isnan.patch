@@ -42,10 +42,3 @@ index b37fc10..eec4fac 100644
        {
        column->SetValue(AVERAGE_ROW, value + column->GetValue(AVERAGE_ROW));
        column->SetValue(MINIMUM_ROW, std::min(column->GetValue(MINIMUM_ROW),
-diff --git a/VTK b/VTK
-index b9d588a..2488a6f 160000
---- a/VTK
-+++ b/VTK
-@@ -1 +1 @@
--Subproject commit b9d588a1d062f20c2a342226cbf8b589346e083c
-+Subproject commit 2488a6f00ba0f99a51d50b566eacc564928b26b3
