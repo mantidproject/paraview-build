@@ -74,6 +74,7 @@ git config user.email "builder@ornl.gov"
 git cherry-pick f8873af932b60154c678e6d4690b61256fd19bce
 git cherry-pick 8a091f4b18812a4b0eca4f93f436474b771f91b6
 git cherry-pick 91c4f719e6bf3e275dad8d75aacf1e0c13fb4f4a
+git apply ${SCRIPT_DIR}/patches/vtkTemporalRanges_isnan.patch
 
 # Go to build area, setup and run
 cd ${BUILD_DIR}
