@@ -68,7 +68,7 @@ git submodule update --init --recursive
 #remove any changes from previous patches
 git reset --hard
 git submodule foreach git reset --hard
-git apply ${SCRIPT_DIR}/patches/vtkTemporalRanges_isnan.patch
+#git apply ${SCRIPT_DIR}/patches/vtkTemporalRanges_isnan.patch
 cd VTK
 git config user.name "Bob T. Builder"
 git config user.email "builder@ornl.gov"
