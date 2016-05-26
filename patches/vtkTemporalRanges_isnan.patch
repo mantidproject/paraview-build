@@ -1,0 +1,16 @@
+diff --git a/Plugins/SLACTools/vtkTemporalRanges.cxx b/Plugins/SLACTools/vtkTemporalRanges.cxx
+index b37fc10..4eacd5b 100644
+--- a/Plugins/SLACTools/vtkTemporalRanges.cxx
++++ b/Plugins/SLACTools/vtkTemporalRanges.cxx
+@@ -80,7 +80,11 @@ namespace vtkTemporalRangesNamespace{
+ 
+   inline void AccumulateValue(double value, vtkDoubleArray *column)
+   {
++#if __cplusplus >= 201103L
++    if (!std::isnan(value))
++#else
+     if (!isnan(value))
++#endif
+       {
+       column->SetValue(AVERAGE_ROW, value + column->GetValue(AVERAGE_ROW));
+       column->SetValue(MINIMUM_ROW, std::min(column->GetValue(MINIMUM_ROW),
