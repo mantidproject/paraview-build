@@ -21,7 +21,7 @@ set MANTID_THIRD_PARTY=%1
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Set the ParaView version to build
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-set PV_VERSION=v5.0.0
+set PV_VERSION=v5.1.0-RC1
 set PV_VERSION3=%PV_VERSION:v=%
 echo Building ParaView %PV_VERSION%
 
@@ -74,8 +74,8 @@ call:fetch-paraview
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Apply patches not yet in ParaView source
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-cd %SRC_DIR%\%PARAVIEW_SRC%\VTK
-"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\vtk_matplotlib.patch
+cd %SRC_DIR%\%PARAVIEW_SRC%
+"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\vtk_override.patch
 if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
