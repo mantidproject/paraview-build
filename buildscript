@@ -91,7 +91,7 @@ OSX_CACHE_FILE=${SCRIPT_DIR}/osx.cmake
 LINUX_CACHE_FILE=${SCRIPT_DIR}/linux.cmake
 
 if [[ ${NODE_LABELS} == *rhel6* ]]; then
-  SCL_ON_RHEL6="scl enable mantidlibs34"
+  SCL_ON_RHEL6="scl enable mantidlibs34 devtoolset-2"
 else
   SCL_ON_RHEL6="eval"
 fi
