@@ -20,7 +20,7 @@
 SCRIPT_DIR=$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd)
 
 # Set the ParaView version to build
-PV_VERSION=v5.1.0-RC1
+PV_VERSION=v5.1.0
 PV_VERSION2=${PV_VERSION%.*}
 PV_VERSION3=${PV_VERSION/v/}
 
