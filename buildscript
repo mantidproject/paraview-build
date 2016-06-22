@@ -20,7 +20,7 @@
 SCRIPT_DIR=$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd)
 
 # Set the ParaView version to build
-PV_VERSION=v5.0.0
+PV_VERSION=v5.1.0
 PV_VERSION2=${PV_VERSION%.*}
 PV_VERSION3=${PV_VERSION/v/}
 
@@ -70,14 +70,12 @@ git reset --hard
 git submodule foreach git reset --hard
 git config user.name "Bob T. Builder"
 git config user.email "builder@ornl.gov"
-git cherry-pick 46f29a6dd7726802a9afa65c14f585528cc1874d
 git apply ${SCRIPT_DIR}/patches/vtk_override.patch
+git apply ${SCRIPT_DIR}/patches/hidden_symbol_visibility.patch
 cd VTK
 git config user.name "Bob T. Builder"
 git config user.email "builder@ornl.gov"
-git cherry-pick f8873af932b60154c678e6d4690b61256fd19bce
-git cherry-pick 8a091f4b18812a4b0eca4f93f436474b771f91b6
-git cherry-pick 91c4f719e6bf3e275dad8d75aacf1e0c13fb4f4a
+git apply ${SCRIPT_DIR}/patches/FasterIsCellVisible.patch
 
 # Go to build area, setup and run
 cd ${BUILD_DIR}
@@ -94,7 +92,7 @@ OSX_CACHE_FILE=${SCRIPT_DIR}/osx.cmake
 LINUX_CACHE_FILE=${SCRIPT_DIR}/linux.cmake
 
 if [[ ${NODE_LABELS} == *rhel6* ]]; then
-  SCL_ON_RHEL6="scl enable mantidlibs34"
+  SCL_ON_RHEL6="scl enable mantidlibs34 devtoolset-2"
 else
   SCL_ON_RHEL6="eval"
 fi
