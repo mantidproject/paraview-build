@@ -76,6 +76,7 @@ cd VTK
 git config user.name "Bob T. Builder"
 git config user.email "builder@ornl.gov"
 git apply ${SCRIPT_DIR}/patches/FasterIsCellVisible.patch
+git cherry-pick 351d0a6d1ce13daef7e52ed988f843aae0ff9fbf
 
 # Go to build area, setup and run
 cd ${BUILD_DIR}
