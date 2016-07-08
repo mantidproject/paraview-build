@@ -78,6 +78,7 @@ git config user.email "builder@ornl.gov"
 git cherry-pick f8873af932b60154c678e6d4690b61256fd19bce
 git cherry-pick 8a091f4b18812a4b0eca4f93f436474b771f91b6
 git cherry-pick 91c4f719e6bf3e275dad8d75aacf1e0c13fb4f4a
+git cherry-pick 351d0a6d1ce13daef7e52ed988f843aae0ff9fbf
 
 # Go to build area, setup and run
 cd ${BUILD_DIR}
