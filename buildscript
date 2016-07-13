@@ -28,6 +28,7 @@ PV_VERSION3=${PV_VERSION/v/}
 BUILDER=builder
 
 if [[ $(uname) == "Darwin" ]]; then
+  ON_OSX=true
   HOME_DIR=/Users/${BUILDER}
 else
   HOME_DIR=/home/${BUILDER}
@@ -40,8 +41,12 @@ else
   BUILD_DIR=${HOME_DIR}/build
 fi
 
-# Print some things
-cmake --version
+# Parse cmake version
+CMAKE_VERSION=$(cmake --version | head -n1 | awk '{print $3}')
+echo "Using cmake version ${CMAKE_VERSION}"
+CMAKE_MAJOR_VERSION=$(echo $CMAKE_VERSION | cut -d. -f1)
+CMAKE_MINOR_VERSION=$(echo $CMAKE_VERSION | cut -d. -f2)
+CMAKE_PATCH_VERSION=$(echo $CMAKE_VERSION | cut -d. -f3)
 
 # Setup directories if they don't exist.
 [[ -d ${SRC_DIR} ]] || mkdir -p ${SRC_DIR}
@@ -76,7 +81,9 @@ cd VTK
 git config user.name "Bob T. Builder"
 git config user.email "builder@ornl.gov"
 git apply ${SCRIPT_DIR}/patches/FasterIsCellVisible.patch
-git cherry-pick 351d0a6d1ce13daef7e52ed988f843aae0ff9fbf
+if [[ "${ON_OSX}" == true ]] && ([[ "${CMAKE_MAJOR_VERSION}" -gt 3 ]] || ([[ "${CMAKE_MAJOR_VERSION}" == 3 ]] && [[ "${CMAKE_MINOR_VERSION}" -ge 6 ]])); then
+  git cherry-pick 351d0a6d1ce13daef7e52ed988f843aae0ff9fbf
+fi
 
 # Go to build area, setup and run
 cd ${BUILD_DIR}
