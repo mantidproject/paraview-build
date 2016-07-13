@@ -105,7 +105,7 @@ else
   SCL_ON_RHEL6="eval"
 fi
 
-if [[ $(uname) == "Darwin" ]]; then
+if [[ "${ON_OSX}" == true ]]; then
   $SCL_ON_RHEL6 "cmake -C${COMMON_CACHE_FILE} -C${OSX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
 else
   $SCL_ON_RHEL6 "cmake -C${COMMON_CACHE_FILE} -C${LINUX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
