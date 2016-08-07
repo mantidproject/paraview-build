@@ -1,0 +1,14 @@
+diff --git a/ParaViewCore/ClientServerCore/Core/vtkPVPlugin.h b/ParaViewCore/ClientServerCore/Core/vtkPVPlugin.h
+index 12bfc3a..708a667 100644
+--- a/ParaViewCore/ClientServerCore/Core/vtkPVPlugin.h
++++ b/ParaViewCore/ClientServerCore/Core/vtkPVPlugin.h
+@@ -35,6 +35,9 @@
+ // __cdecl gives an unmangled name
+ # define C_DECL __cdecl
+ # define C_EXPORT extern "C" __declspec(dllexport)
++#elif defined(__GNUC__)
++# define C_DECL
++# define C_EXPORT extern "C" __attribute__ ((visibility ("default")))
+ #else
+ # define C_DECL
+ # define C_EXPORT extern "C"

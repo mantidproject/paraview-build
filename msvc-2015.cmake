@@ -46,6 +46,5 @@ set (HDF5_LIBRARIES "${HDF5_C_LIBRARY};${HDF5_HL_LIBRARY};${HDF5_CXX_LIBRARY};${
 # We don't ship jpeg with Windows.
 set (VTK_USE_SYSTEM_JPEG OFF CACHE BOOL "")
 # Specify shared system jsoncpp library. 
-set (VTK_USE_SYSTEM_JSONCPP ON CACHE BOOL "")
 set (VTK_SYSTEM_JSONCPP_SHARED ON CACHE BOOL "")
 

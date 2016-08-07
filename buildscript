@@ -26,6 +26,7 @@ PV_VERSION=master
 BUILDER=builder
 
 if [[ $(uname) == "Darwin" ]]; then
+  ON_OSX=true
   HOME_DIR=/Users/${BUILDER}
 else
   HOME_DIR=/home/${BUILDER}
@@ -38,8 +39,12 @@ else
   BUILD_DIR=${HOME_DIR}/build
 fi
 
-# Print some things
-cmake --version
+# Parse cmake version
+CMAKE_VERSION=$(cmake --version | head -n1 | awk '{print $3}')
+echo "Using cmake version ${CMAKE_VERSION}"
+CMAKE_MAJOR_VERSION=$(echo $CMAKE_VERSION | cut -d. -f1)
+CMAKE_MINOR_VERSION=$(echo $CMAKE_VERSION | cut -d. -f2)
+CMAKE_PATCH_VERSION=$(echo $CMAKE_VERSION | cut -d. -f3)
 
 # Setup directories if they don't exist.
 [[ -d ${SRC_DIR} ]] || mkdir -p ${SRC_DIR}
@@ -67,9 +72,13 @@ git reset --hard
 git submodule foreach git reset --hard
 git pull --rebase origin master
 git submodule update --init --recursive
+git config user.name "Bob T. Builder"
+git config user.email "builder@ornl.gov"
+git apply ${SCRIPT_DIR}/patches/vtk_override.patch
 cd VTK
-git apply ${SCRIPT_DIR}/patches/vtk_netcdf4.patch
-git apply ${SCRIPT_DIR}/patches/vtk_matplotlib.patch
+git config user.name "Bob T. Builder"
+git config user.email "builder@ornl.gov"
+git apply ${SCRIPT_DIR}/patches/FasterIsCellVisible.patch
 
 # Go to build area, setup and run
 cd ${BUILD_DIR}
@@ -86,12 +95,12 @@ OSX_CACHE_FILE=${SCRIPT_DIR}/osx.cmake
 LINUX_CACHE_FILE=${SCRIPT_DIR}/linux.cmake
 
 if [[ ${NODE_LABELS} == *rhel6* ]]; then
-  SCL_ON_RHEL6="scl enable mantidlibs34"
+  SCL_ON_RHEL6="scl enable mantidlibs34 devtoolset-2"
 else
   SCL_ON_RHEL6="eval"
 fi
 
-if [[ $(uname) == "Darwin" ]]; then
+if [[ "${ON_OSX}" == true ]]; then
   $SCL_ON_RHEL6 "cmake -C${COMMON_CACHE_FILE} -C${OSX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
 else
   $SCL_ON_RHEL6 "cmake -C${COMMON_CACHE_FILE} -C${LINUX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
