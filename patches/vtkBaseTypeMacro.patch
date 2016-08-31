@@ -1,16 +1,3 @@
-diff --git a/ParaViewCore/ServerManager/Core/vtkSMProxyIterator.h b/ParaViewCore/ServerManager/Core/vtkSMProxyIterator.h
-index 648efb4..91cd5ee 100644
---- a/ParaViewCore/ServerManager/Core/vtkSMProxyIterator.h
-+++ b/ParaViewCore/ServerManager/Core/vtkSMProxyIterator.h
-@@ -35,7 +35,7 @@ class VTKPVSERVERMANAGERCORE_EXPORT vtkSMProxyIterator : public vtkSMObject
- {
- public:
-   static vtkSMProxyIterator* New();
--  vtkTypeMacro(vtkSMProxyIterator, vtkSMObject);
-+  vtkBaseTypeMacro(vtkSMProxyIterator, vtkSMObject);
-   void PrintSelf(ostream& os, vtkIndent indent);
- 
-   // Description:
 diff --git a/ParaViewCore/ServerManager/Core/vtkSMSessionProxyManagerInternals.h b/ParaViewCore/ServerManager/Core/vtkSMSessionProxyManagerInternals.h
 index e9e6339..2b79155 100644
 --- a/ParaViewCore/ServerManager/Core/vtkSMSessionProxyManagerInternals.h
