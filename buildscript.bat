@@ -75,9 +75,7 @@ call:fetch-paraview
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 cd %SRC_DIR%\%PARAVIEW_SRC%
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\vtk_override.patch
-"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\hidden_symbol_visibility.patch
-cd %SRC_DIR%\%PARAVIEW_SRC%\VTK
-"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\FasterIsCellVisible.patch
+:: cd %SRC_DIR%\%PARAVIEW_SRC%\VTK
 if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
