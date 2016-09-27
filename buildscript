@@ -75,7 +75,6 @@ git submodule update --init --recursive
 git config user.name "Bob T. Builder"
 git config user.email "builder@ornl.gov"
 git apply ${SCRIPT_DIR}/patches/vtk_override.patch
-git apply ${SCRIPT_DIR}/patches/sstream.patch
 #cd VTK
 
 # Go to build area, setup and run
