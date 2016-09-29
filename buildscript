@@ -72,9 +72,8 @@ git reset --hard
 git submodule foreach git reset --hard
 git pull --rebase origin master
 git submodule update --init --recursive
-git config user.name "Bob T. Builder"
-git config user.email "builder@ornl.gov"
-git apply ${SCRIPT_DIR}/patches/vtk_override.patch
+#git config user.name "Bob T. Builder"
+#git config user.email "builder@ornl.gov"
 #cd VTK
 
 # Go to build area, setup and run
