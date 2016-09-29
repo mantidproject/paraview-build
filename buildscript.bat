@@ -79,6 +79,7 @@ cd %SRC_DIR%\%PARAVIEW_SRC%
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\hidden_symbol_visibility.patch
 cd %SRC_DIR%\%PARAVIEW_SRC%\VTK
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\FasterIsCellVisible.patch
+"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\VolumeRendering.patch
 if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
