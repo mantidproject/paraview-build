@@ -73,8 +73,7 @@ call:fetch-paraview
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Apply patches not yet in ParaView source
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-cd %SRC_DIR%\%PARAVIEW_SRC%
-"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\vtk_override.patch
+:: cd %SRC_DIR%\%PARAVIEW_SRC%
 :: cd %SRC_DIR%\%PARAVIEW_SRC%\VTK
 if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 
