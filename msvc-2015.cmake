@@ -37,7 +37,7 @@ set (HDF5_INCLUDE_DIRS "${BASE_INCLUDE_DIR}" CACHE PATH "")
 set (HDF5_C_LIBRARY ${BASE_LIB_DIR}/hdf5.lib CACHE FILEPATH "")
 set (HDF5_C_HL_LIBRARY ${BASE_LIB_DIR}/hdf5_hl.lib CACHE FILEPATH "")
 set (HDF5_CXX_LIBRARY ${BASE_LIB_DIR}/hdf5_cpp.lib CACHE FILEPATH "")
-set (HDF5_HL_CPP_LIBRARY ${BASE_LIB_DIR}/hdf5_hl_cpp.lib CACHE FILEPATH "")
+set (HDF5_HL_CXX_LIBRARY ${BASE_LIB_DIR}/hdf5_hl_cpp.lib CACHE FILEPATH "")
 
 ###############################################################################
 # System libraries
