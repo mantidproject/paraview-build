@@ -7,6 +7,6 @@ Notes for building with python3
 -------------------------------
 To stand a chance you need to add
 ```
--DPYTHON_EXECUTABLE=/usr/bin/python3 -DVTK_USE_SYSTEM_TWISTED=on -DPARAVIEW_ENABLE_WEB=off
+-C${SCRIPT_DIR}/python3.cmake
 ```
 to your `cmake` command
