@@ -82,9 +82,9 @@ git config user.name "Bob T. Builder"
 git config user.email "builder@ornl.gov"
 git apply ${SCRIPT_DIR}/patches/FasterIsCellVisible.patch
 git apply ${SCRIPT_DIR}/patches/VolumeRendering.patch
-if [[ "${ON_OSX}" == true ]] && ([[ "${CMAKE_MAJOR_VERSION}" -gt 3 ]] || ([[ "${CMAKE_MAJOR_VERSION}" == 3 ]] && [[ "${CMAKE_MINOR_VERSION}" -ge 6 ]])); then
-  git cherry-pick 351d0a6d1ce13daef7e52ed988f843aae0ff9fbf
-fi
+#if [[ "${ON_OSX}" == true ]] && ([[ "${CMAKE_MAJOR_VERSION}" -gt 3 ]] || ([[ "${CMAKE_MAJOR_VERSION}" == 3 ]] && [[ "${CMAKE_MINOR_VERSION}" -ge 6 ]])); then
+#  git cherry-pick 351d0a6d1ce13daef7e52ed988f843aae0ff9fbf
+#fi
 
 # Go to build area, setup and run
 cd ${BUILD_DIR}
