@@ -20,7 +20,7 @@
 SCRIPT_DIR=$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd)
 
 # Set the ParaView version to build
-PV_VERSION=v5.1.2
+PV_VERSION=v5.2.0-RC3
 PV_VERSION2=${PV_VERSION%.*}
 PV_VERSION3=${PV_VERSION/v/}
 
@@ -73,18 +73,12 @@ git submodule update --init --recursive
 #remove any changes from previous patches
 git reset --hard
 git submodule foreach git reset --hard
-git config user.name "Bob T. Builder"
-git config user.email "builder@ornl.gov"
-git apply ${SCRIPT_DIR}/patches/vtk_override.patch
-git apply ${SCRIPT_DIR}/patches/hidden_symbol_visibility.patch
+#git config user.name "Bob T. Builder"
+#git config user.email "builder@ornl.gov"
 cd VTK
 git config user.name "Bob T. Builder"
 git config user.email "builder@ornl.gov"
-git apply ${SCRIPT_DIR}/patches/FasterIsCellVisible.patch
-git apply ${SCRIPT_DIR}/patches/VolumeRendering.patch
-#if [[ "${ON_OSX}" == true ]] && ([[ "${CMAKE_MAJOR_VERSION}" -gt 3 ]] || ([[ "${CMAKE_MAJOR_VERSION}" == 3 ]] && [[ "${CMAKE_MINOR_VERSION}" -ge 6 ]])); then
-#  git cherry-pick 351d0a6d1ce13daef7e52ed988f843aae0ff9fbf
-#fi
+git apply ${SCRIPT_DIR}/patches/2059.diff
 
 # Go to build area, setup and run
 cd ${BUILD_DIR}
