@@ -113,7 +113,7 @@ index 22f7f15..b4ce1e7 100644
 -    {
 -      cellDim[i] = 1;
 -    }
-+    cellDim[i] = vtkMath::Max(cellDim[i] - 1, 1);
++    cellDim[i] = vtkMath::Max(dim[i] - 1, 1);
    }
  
 -  for (j=0; j<8; j++)
