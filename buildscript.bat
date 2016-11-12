@@ -21,7 +21,7 @@ set MANTID_THIRD_PARTY=%1
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Set the ParaView version to build
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-set PV_VERSION=v5.1.2
+set PV_VERSION=v5.2.0
 set PV_VERSION3=%PV_VERSION:v=%
 echo Building ParaView %PV_VERSION%
 
@@ -75,15 +75,13 @@ call:fetch-paraview
 :: Apply patches not yet in ParaView source
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 cd %SRC_DIR%\%PARAVIEW_SRC%
-"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\vtk_override.patch
-"%GitCmd%" config user.name "Bob T. Builder"
-"%GitCmd%" config user.email "builder@ornl.gov"
-"%GitCmd%" cherry-pick 22aa54d1e03d34e462f57a2e7b808feafcd1bd7a
+::"%GitCmd%" config user.name "Bob T. Builder"
+::"%GitCmd%" config user.email "builder@ornl.gov"
 cd %SRC_DIR%\%PARAVIEW_SRC%\VTK
 "%GitCmd%" config user.name "Bob T. Builder"
 "%GitCmd%" config user.email "builder@ornl.gov"
-"%GitCmd%" cherry-pick 71674faf18f453aa348bd61a1bf91f0e012192ab
-"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\VolumeRendering.patch
+"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2059.diff
+"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2146.diff
 if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
