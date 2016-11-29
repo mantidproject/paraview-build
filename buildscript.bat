@@ -75,8 +75,9 @@ call:fetch-paraview
 :: Apply patches not yet in ParaView source
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 cd %SRC_DIR%\%PARAVIEW_SRC%
-::"%GitCmd%" config user.name "Bob T. Builder"
-::"%GitCmd%" config user.email "builder@ornl.gov"
+"%GitCmd%" config user.name "Bob T. Builder"
+"%GitCmd%" config user.email "builder@ornl.gov"
+"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\1211.diff
 cd %SRC_DIR%\%PARAVIEW_SRC%\VTK
 "%GitCmd%" config user.name "Bob T. Builder"
 "%GitCmd%" config user.email "builder@ornl.gov"

@@ -1,0 +1,110 @@
+diff --git a/ParaViewCore/ClientServerCore/Rendering/vtkGeometryRepresentation.cxx b/ParaViewCore/ClientServerCore/Rendering/vtkGeometryRepresentation.cxx
+index c60d4a0..ecf6568 100644
+--- a/ParaViewCore/ClientServerCore/Rendering/vtkGeometryRepresentation.cxx
++++ b/ParaViewCore/ClientServerCore/Rendering/vtkGeometryRepresentation.cxx
+@@ -21,6 +21,7 @@
+ #endif
+ #include "vtkAlgorithmOutput.h"
+ #include "vtkBoundingBox.h"
++#include "vtkCallbackCommand.h"
+ #include "vtkCommand.h"
+ #include "vtkCompositeDataDisplayAttributes.h"
+ #include "vtkCompositeDataIterator.h"
+@@ -101,9 +102,25 @@ vtkStandardNewMacro(vtkGeometryRepresentationMultiBlockMaker);
+ 
+ vtkStandardNewMacro(vtkGeometryRepresentation);
+ //----------------------------------------------------------------------------
++
++void ProgressFunction(vtkObject *caller, long unsigned int vtkNotUsed(eventId),
++                      void *clientData, void *vtkNotUsed(callData)) {
++ vtkPVGeometryFilter *filter = dynamic_cast<vtkPVGeometryFilter*>(caller);
++ vtkGeometryRepresentation* parent = reinterpret_cast<vtkGeometryRepresentation *>(clientData);
++ if(filter && parent)
++ {
++   parent->UpdateProgress(filter->GetProgress());
++ }
++}
++
+ vtkGeometryRepresentation::vtkGeometryRepresentation()
+ {
+   this->GeometryFilter = vtkPVGeometryFilter::New();
++  //connect progress bar
++  vtkNew<vtkCallbackCommand> progressCallback;
++  progressCallback->SetCallback(ProgressFunction);
++  progressCallback->SetClientData(this);
++  this->GeometryFilter->AddObserver(vtkCommand::ProgressEvent, progressCallback.GetPointer());
+   this->CacheKeeper = vtkPVCacheKeeper::New();
+   this->MultiBlockMaker = vtkGeometryRepresentationMultiBlockMaker::New();
+   this->Decimator = vtkQuadricClustering::New();
+diff --git a/ParaViewCore/VTKExtensions/Rendering/vtkPVGeometryFilter.cxx b/ParaViewCore/VTKExtensions/Rendering/vtkPVGeometryFilter.cxx
+index 34f5ca6..6d760ec 100644
+--- a/ParaViewCore/VTKExtensions/Rendering/vtkPVGeometryFilter.cxx
++++ b/ParaViewCore/VTKExtensions/Rendering/vtkPVGeometryFilter.cxx
+@@ -162,9 +162,9 @@ vtkPVGeometryFilter::vtkPVGeometryFilter()
+   // Setup a callback for the internal readers to report progress.
+   this->InternalProgressObserver = vtkCallbackCommand::New();
+   this->InternalProgressObserver->SetCallback(
+-    &vtkPVGeometryFilter::InternalProgressCallbackFunction);
++    &vtkPVGeometryFilter::InternalProgressCallback);
+   this->InternalProgressObserver->SetClientData(this);
+-
++  this->DataSetSurfaceFilter->AddObserver(vtkCommand::ProgressEvent,InternalProgressObserver);
+   this->Controller = 0;
+   this->SetController(vtkMultiProcessController::GetGlobalController());
+   this->GenerateProcessIds = (this->Controller && this->Controller->GetNumberOfProcesses() > 1);
+@@ -281,25 +281,25 @@ vtkExecutive* vtkPVGeometryFilter::CreateDefaultExecutive()
+ }
+ 
+ //----------------------------------------------------------------------------
+-void vtkPVGeometryFilter::InternalProgressCallbackFunction(
+-  vtkObject* arg, unsigned long, void* clientdata, void*)
+-{
+-  reinterpret_cast<vtkPVGeometryFilter*>(clientdata)
+-    ->InternalProgressCallback(static_cast<vtkAlgorithm*>(arg));
+-}
+-
+-//----------------------------------------------------------------------------
+-void vtkPVGeometryFilter::InternalProgressCallback(vtkAlgorithm* algorithm)
++void vtkPVGeometryFilter::InternalProgressCallback(vtkObject *arg,
++                                                   unsigned long,
++                                                   void* clientData,
++                                                   void*)
+ {
++  vtkPVGeometryFilter *parent = reinterpret_cast<vtkPVGeometryFilter*>(clientData);
++  vtkDataSetSurfaceFilter *algorithm = dynamic_cast<vtkDataSetSurfaceFilter*>(arg);
+   // This limits progress for only the DataSetSurfaceFilter.
+-  float progress = algorithm->GetProgress();
+-  if (progress > 0 && progress < 1)
++  if(algorithm && parent)
+   {
+-    this->UpdateProgress(progress);
+-  }
+-  if (this->AbortExecute)
+-  {
+-    algorithm->SetAbortExecute(1);
++    double progress = algorithm->GetProgress();
++    if (progress > 0 && progress < 1)
++    {
++      parent->UpdateProgress(progress);
++    }
++    if (parent->AbortExecute)
++    {
++      algorithm->SetAbortExecute(1);
++    }
+   }
+ }
+ 
+diff --git a/ParaViewCore/VTKExtensions/Rendering/vtkPVGeometryFilter.h b/ParaViewCore/VTKExtensions/Rendering/vtkPVGeometryFilter.h
+index 0c3c8e0..5b2c81a 100644
+--- a/ParaViewCore/VTKExtensions/Rendering/vtkPVGeometryFilter.h
++++ b/ParaViewCore/VTKExtensions/Rendering/vtkPVGeometryFilter.h
+@@ -295,8 +295,7 @@ protected:
+   int CheckAttributes(vtkDataObject* input);
+ 
+   // Callback registered with the InternalProgressObserver.
+-  static void InternalProgressCallbackFunction(vtkObject*, unsigned long, void* clientdata, void*);
+-  void InternalProgressCallback(vtkAlgorithm* algorithm);
++  static void InternalProgressCallback(vtkObject *arg, unsigned long, void *clientData, void*);
+   // The observer to report progress from the internal readers.
+   vtkCallbackCommand* InternalProgressObserver;
+ 
