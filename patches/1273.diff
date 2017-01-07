@@ -1,0 +1,46 @@
+diff --git a/ParaViewCore/ClientServerCore/Rendering/vtkThreeSliceFilter.cxx b/ParaViewCore/ClientServerCore/Rendering/vtkThreeSliceFilter.cxx
+index c358da9..b3313f0 100644
+--- a/ParaViewCore/ClientServerCore/Rendering/vtkThreeSliceFilter.cxx
++++ b/ParaViewCore/ClientServerCore/Rendering/vtkThreeSliceFilter.cxx
+@@ -30,6 +30,7 @@
+ #include "vtkPlane.h"
+ #include "vtkPointData.h"
+ #include "vtkPointSource.h"
++#include "vtkSMPTools.h"
+ #include "vtkUnsignedIntArray.h"
+ 
+ #include <math.h>
+@@ -220,6 +221,22 @@ int vtkThreeSliceFilter::RequestData(
+   return 1;
+ }
+ 
++namespace {
++class CutWorker {
++public:
++  CutWorker(vtkCutter *slices[3]) : Slices{slices[0],slices[1],slices[2]} {}
++  void operator()(vtkIdType begin, vtkIdType end)
++  {
++    for (vtkIdType idx = begin; idx < end; ++idx)
++    {
++      Slices[idx]->Update();
++    }
++  }
++private:
++  vtkCutter* Slices[3];
++};
++}
++
+ //----------------------------------------------------------------------------
+ void vtkThreeSliceFilter::Process(
+   vtkDataSet* input, vtkPolyData* outputs[4], unsigned int compositeIndex)
+@@ -255,6 +272,10 @@ void vtkThreeSliceFilter::Process(
+   this->Slices[1]->SetInputData(input);
+   this->Slices[2]->SetInputData(input);
+ 
++  //Update components in parallel
++  CutWorker worker(this->Slices);
++  vtkSMPTools::For(0,3,1,worker);
++  
+   // Update the internal pipeline
+   this->CombinedFilteredInput->Update();
+ 

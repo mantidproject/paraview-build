@@ -76,6 +76,7 @@ git submodule foreach git reset --hard
 git config user.name "Bob T. Builder"
 git config user.email "builder@ornl.gov"
 git apply ${SCRIPT_DIR}/patches/1211.diff
+git apply ${SCRIPT_DIR}/patches/1273.diff
 cd VTK
 git config user.name "Bob T. Builder"
 git config user.email "builder@ornl.gov"
