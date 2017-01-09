@@ -1,0 +1,396 @@
+diff --git a/Common/DataModel/Testing/Cxx/TestPlane.cxx b/Common/DataModel/Testing/Cxx/TestPlane.cxx
+index cb7b666..af3e498 100644
+--- a/Common/DataModel/Testing/Cxx/TestPlane.cxx
++++ b/Common/DataModel/Testing/Cxx/TestPlane.cxx
+@@ -13,9 +13,14 @@
+ 
+ =========================================================================*/
+ 
++#include "vtkFloatArray.h"
+ #include "vtkMath.h"
++#include "vtkMathUtilities.h"
++#include "vtkNew.h"
+ #include "vtkPlane.h"
++#include "vtkPoints.h"
+ #include "vtkSmartPointer.h"
++#include "vtkDataArrayAccessor.h"
+ 
+ #include <limits>
+ 
+@@ -99,5 +104,68 @@ int TestPlane(int,char *[])
+   }
+   }
+ 
++  {
++    vtkNew<vtkPlane> plane;
++    plane->SetOrigin(0.0, 0.0, 0.0);
++    plane->SetNormal(0.0, 0.0, 1.0);
++
++    vtkIdType nPointsPerDimension = 11;
++    vtkIdType nPoints = std::pow(nPointsPerDimension,3);
++    vtkNew<vtkPoints> points;
++    points->SetNumberOfPoints(nPoints);
++
++    //Generate a grid of points
++    float in[3];
++    float minX(-1.0f),minY(-1.0f),minZ(-1.0f);
++    float increment(2.0f/(static_cast<float>(nPointsPerDimension)-1.0f));
++    vtkIdType pos = 0;
++    for (int z = 0; z < nPointsPerDimension; ++z) {
++      in[2] = minZ + static_cast<float>(z) * increment;
++      for (int y = 0; y < nPointsPerDimension; ++y) {
++        in[1] = minY + static_cast<float>(y) * increment;
++        for (int x = 0; x < nPointsPerDimension; ++x) {
++          in[0] = minX + static_cast<float>(x) * increment;
++          points->SetPoint(pos, in);
++          ++pos;
++        }
++      }
++    }
++    assert(pos == nPoints);
++
++    vtkDataArray *input = points->GetData();
++    vtkNew<vtkFloatArray> arrayOutput;
++    arrayOutput->SetNumberOfComponents(1);
++    arrayOutput->SetNumberOfTuples(nPoints);
++
++    std::cout << "Testing FunctionValue:\n";
++    // calcuate function values with the vtkDataArray interface
++    plane->FunctionValue(input, arrayOutput.GetPointer());
++
++    //Calculate the same points using a loop over points.
++    vtkNew<vtkFloatArray> loopOutput;
++    loopOutput->SetNumberOfComponents(1);
++    loopOutput->SetNumberOfTuples(nPoints);
++    vtkDataArrayAccessor<vtkFloatArray> output(loopOutput.GetPointer());
++    vtkDataArrayAccessor<vtkFloatArray> pts(vtkFloatArray::SafeDownCast(input));
++
++    for(vtkIdType pt = 0; pt < nPoints;++pt)
++    {
++      double x[3];
++      x[0] = pts.Get(pt,0);
++      x[1] = pts.Get(pt,1);
++      x[2] = pts.Get(pt,2);
++      output.Set(pt,0,plane->FunctionValue(x));
++    }
++
++    for (vtkIdType i = 0; i < nPoints; ++i)
++    {
++      if(!vtkMathUtilities::FuzzyCompare(arrayOutput->GetTypedComponent(i, 0),loopOutput->GetTypedComponent(i, 0)))
++      {
++        std::cerr << "Array and point interfaces returning different results at index " << i << ": "
++                  << arrayOutput->GetTypedComponent(i, 0) << " vs " << loopOutput->GetTypedComponent(i, 0) << '\n';
++        return EXIT_FAILURE;
++      }
++    }
++  }
+   return EXIT_SUCCESS;
+ }
+diff --git a/Common/DataModel/vtkImplicitFunction.cxx b/Common/DataModel/vtkImplicitFunction.cxx
+index 3190764..159304b 100644
+--- a/Common/DataModel/vtkImplicitFunction.cxx
++++ b/Common/DataModel/vtkImplicitFunction.cxx
+@@ -14,8 +14,11 @@
+ =========================================================================*/
+ #include "vtkImplicitFunction.h"
+ 
+-#include "vtkMath.h"
+ #include "vtkAbstractTransform.h"
++#include "vtkArrayDispatch.h"
++#include "vtkAssume.h"
++#include "vtkDataArrayAccessor.h"
++#include "vtkMath.h"
+ #include "vtkTransform.h"
+ 
+ vtkCxxSetObjectMacro(vtkImplicitFunction,Transform,vtkAbstractTransform);
+@@ -32,6 +35,103 @@ vtkImplicitFunction::~vtkImplicitFunction()
+   this->SetTransform(static_cast<vtkAbstractTransform*>(NULL));
+ }
+ 
++namespace {
++
++template <class Func> struct FunctionWorker {
++  Func F;
++  FunctionWorker(Func f) : F(f) {}
++  template <typename SourceArray, typename DestinationArray>
++  void operator()(SourceArray *input, DestinationArray *output)
++  {
++    VTK_ASSUME(input->GetNumberOfComponents() == 3);
++    VTK_ASSUME(output->GetNumberOfComponents() == 1);
++
++    vtkIdType numTuples = input->GetNumberOfTuples();
++    output->SetNumberOfTuples(numTuples);
++
++    vtkDataArrayAccessor<SourceArray> src(input);
++    vtkDataArrayAccessor<DestinationArray> dest(output);
++
++    for (vtkIdType tIdx = 0; tIdx < numTuples; ++tIdx)
++    {
++      double in[3];
++      in[0] = static_cast<double>(src.Get(tIdx, 0));
++      in[1] = static_cast<double>(src.Get(tIdx, 1));
++      in[2] = static_cast<double>(src.Get(tIdx, 2));
++      dest.Set(tIdx, 0, this->F(in));
++    }
++  }
++};
++
++class SimpleFunction {
++public:
++  SimpleFunction(vtkImplicitFunction *function) : Function(function) {}
++  double operator()(double in[3])
++  {
++    return this->Function->EvaluateFunction(in);
++  }
++private:
++  vtkImplicitFunction *Function;
++};
++
++class TransformFunction {
++public:
++  TransformFunction(vtkImplicitFunction *function,
++                    vtkAbstractTransform *transform)
++      : Function(function), Transform(transform) {}
++  double operator()(double in[3])
++  {
++    Transform->TransformPoint(in, in);
++    return this->Function->EvaluateFunction(in);
++  }
++private:
++  vtkImplicitFunction *Function;
++  vtkAbstractTransform *Transform;
++};
++
++} // end anon namespace
++
++void vtkImplicitFunction::FunctionValue(vtkDataArray *input,
++                                        vtkDataArray *output)
++{
++  if (!this->Transform)
++  {
++    this->EvaluateFunction(input, output);
++  }
++  else // pass point through transform
++  {
++    FunctionWorker<TransformFunction> worker(
++        TransformFunction(this, this->Transform));
++    typedef vtkTypeList_Create_2(float, double) InputTypes;
++    typedef vtkTypeList_Create_2(float, double) OutputTypes;
++    typedef vtkArrayDispatch::Dispatch2ByValueType<InputTypes, OutputTypes>
++        MyDispatch;
++    if (!MyDispatch::Execute(input, output, worker))
++    {
++      worker(input, output); // Use vtkDataArray API if dispatch fails.
++    }
++  }
++}
++
++void vtkImplicitFunction::EvaluateFunction(vtkDataArray *input,
++                                           vtkDataArray *output)
++{
++
++  // defend against uninitialized onput datasets.
++  output->SetNumberOfComponents(1);
++  output->SetNumberOfTuples(input->GetNumberOfTuples());
++
++  FunctionWorker<SimpleFunction> worker(SimpleFunction(this));
++  typedef vtkTypeList_Create_2(float, double) InputTypes;
++  typedef vtkTypeList_Create_2(float, double) OutputTypes;
++  typedef vtkArrayDispatch::Dispatch2ByValueType<InputTypes, OutputTypes>
++      MyDispatch;
++  if (!MyDispatch::Execute(input, output, worker))
++  {
++    worker(input, output); // Use vtkDataArray API if dispatch fails.
++  }
++}
++
+ // Evaluate function at position x-y-z and return value. Point x[3] is
+ // transformed through transform (if provided).
+ double vtkImplicitFunction::FunctionValue(const double x[3])
+diff --git a/Common/DataModel/vtkImplicitFunction.h b/Common/DataModel/vtkImplicitFunction.h
+index 8778ab4..aad5f7a 100644
+--- a/Common/DataModel/vtkImplicitFunction.h
++++ b/Common/DataModel/vtkImplicitFunction.h
+@@ -53,6 +53,8 @@
+ #include "vtkCommonDataModelModule.h" // For export macro
+ #include "vtkObject.h"
+ 
++class vtkDataArray;
++
+ class vtkAbstractTransform;
+ 
+ class VTKCOMMONDATAMODEL_EXPORT vtkImplicitFunction : public vtkObject
+@@ -72,6 +74,7 @@ public:
+    * Evaluate function at position x-y-z and return value. Point x[3] is
+    * transformed through transform (if provided).
+    */
++  virtual void FunctionValue(vtkDataArray *input, vtkDataArray *output);
+   double FunctionValue(const double x[3]);
+   double FunctionValue(double x, double y, double z) {
+     double xyz[3] = {x, y, z}; return this->FunctionValue(xyz); };
+@@ -108,6 +111,9 @@ public:
+    * any derived class.
+    */
+   virtual double EvaluateFunction(double x[3]) = 0;
++
++  virtual void EvaluateFunction(vtkDataArray *input, vtkDataArray *output);
++
+   double EvaluateFunction(double x, double y, double z) {
+     double xyz[3] = {x, y, z}; return this->EvaluateFunction(xyz); };
+   //@}
+diff --git a/Common/DataModel/vtkPlane.cxx b/Common/DataModel/vtkPlane.cxx
+index 51ff3dd..053e87e 100644
+--- a/Common/DataModel/vtkPlane.cxx
++++ b/Common/DataModel/vtkPlane.cxx
+@@ -13,8 +13,12 @@
+ 
+ =========================================================================*/
+ #include "vtkPlane.h"
++#include "vtkArrayDispatch.h"
++#include "vtkAssume.h"
++#include "vtkDataArrayAccessor.h"
+ #include "vtkMath.h"
+ #include "vtkObjectFactory.h"
++#include "vtkSMPTools.h"
+ 
+ vtkStandardNewMacro(vtkPlane);
+ 
+@@ -212,6 +216,66 @@ int vtkPlane::IntersectWithLine(double p1[3], double p2[3], double n[3],
+   }
+ }
+ 
++namespace {
++template <typename InputArrayType, typename OutputArrayType> struct CutWorker {
++  typedef typename vtkDataArrayAccessor<InputArrayType>::APIType InputValueType;
++  typedef
++      typename vtkDataArrayAccessor<InputArrayType>::APIType OutputValueType;
++  OutputValueType Normal[3];
++  OutputValueType Origin[3];
++  vtkDataArrayAccessor<InputArrayType> src;
++  vtkDataArrayAccessor<OutputArrayType> dest;
++
++  CutWorker(InputArrayType *in, OutputArrayType *out) : src(in), dest(out) {}
++  void operator()(vtkIdType begin, vtkIdType end)
++  {
++    for (vtkIdType tIdx = begin; tIdx < end; ++tIdx)
++    {
++      OutputValueType x[3];
++      x[0] = static_cast<OutputValueType>(src.Get(tIdx, 0));
++      x[1] = static_cast<OutputValueType>(src.Get(tIdx, 1));
++      x[2] = static_cast<OutputValueType>(src.Get(tIdx, 2));
++      OutputValueType out =
++          Normal[0] * (x[0] - Origin[0]) +
++          Normal[1] * (x[1] - Origin[1]) +
++          Normal[2] * (x[2] - Origin[2]);
++      dest.Set(tIdx, 0, out);
++    }
++  }
++};
++
++struct CutFunctionWorker {
++  double Normal[3];
++  double Origin[3];
++  CutFunctionWorker(double n[3], double o[3]) {
++    std::copy_n(n, 3, this->Normal);
++    std::copy_n(o, 3, this->Origin);
++  }
++  template <typename InputArrayType, typename OutputArrayType>
++  void operator()(InputArrayType *input, OutputArrayType *output) {
++    VTK_ASSUME(input->GetNumberOfComponents() == 3);
++    VTK_ASSUME(output->GetNumberOfComponents() == 1);
++
++    vtkIdType numTuples = input->GetNumberOfTuples();
++    CutWorker<InputArrayType, OutputArrayType> cut(input, output);
++    std::copy_n(Normal, 3, cut.Normal);
++    std::copy_n(Origin, 3, cut.Origin);
++    vtkSMPTools::For(0, numTuples, cut);
++  }
++};
++} // end anon namespace
++
++void vtkPlane::EvaluateFunction(vtkDataArray *input, vtkDataArray *output) {
++  CutFunctionWorker worker(this->Normal, this->Origin);
++  typedef vtkTypeList_Create_2(float, double) InputTypes;
++  typedef vtkTypeList_Create_2(float, double) OutputTypes;
++  typedef vtkArrayDispatch::Dispatch2ByValueType<InputTypes, OutputTypes>
++      MyDispatch;
++  if (!MyDispatch::Execute(input, output, worker)) {
++    worker(input, output); // Use vtkDataArray API if dispatch fails.
++  }
++}
++
+ int vtkPlane::IntersectWithLine(double p1[3], double p2[3], double& t, double x[3])
+ {
+   return this->IntersectWithLine(p1, p2, this->GetNormal(), this->GetOrigin(), t, x);
+diff --git a/Common/DataModel/vtkPlane.h b/Common/DataModel/vtkPlane.h
+index c07efef..f392932 100644
+--- a/Common/DataModel/vtkPlane.h
++++ b/Common/DataModel/vtkPlane.h
+@@ -43,6 +43,7 @@ public:
+   /**
+    * Evaluate plane equation for point x[3].
+    */
++  void EvaluateFunction(vtkDataArray *input, vtkDataArray *output) VTK_OVERRIDE;
+   double EvaluateFunction(double x[3]) VTK_OVERRIDE;
+   double EvaluateFunction(double x, double y, double z)
+     {return this->vtkImplicitFunction::EvaluateFunction(x, y, z); } ;
+diff --git a/Filters/Core/vtkCutter.cxx b/Filters/Core/vtkCutter.cxx
+index 73228a9..f2f1c9b 100644
+--- a/Filters/Core/vtkCutter.cxx
++++ b/Filters/Core/vtkCutter.cxx
+@@ -201,39 +201,6 @@ void vtkCutter::StructuredPointsCutter(vtkDataSet *dataSetInput,
+   contourData->Delete();
+ }
+ 
+-namespace {
+-struct CutFunctionWorker
+-{
+-  vtkImplicitFunction *CutFunction;
+-  vtkFloatArray *Output;
+-
+-  CutFunctionWorker(vtkImplicitFunction *cutFunction, vtkFloatArray *output)
+-    : CutFunction(cutFunction), Output(output) {}
+-
+-  template <typename ArrayT>
+-  void operator()(ArrayT *input)
+-  {
+-    VTK_ASSUME(input->GetNumberOfComponents() == 3);
+-    VTK_ASSUME(this->Output->GetNumberOfComponents() == 1);
+-
+-    vtkIdType numTuples = input->GetNumberOfTuples();
+-    assert(numTuples == this->Output->GetNumberOfTuples());
+-
+-    vtkDataArrayAccessor<ArrayT> src(input);
+-
+-    double in[3];
+-    for (vtkIdType tIdx = 0; tIdx < numTuples; ++tIdx)
+-    {
+-      in[0] = static_cast<double>(src.Get(tIdx, 0));
+-      in[1] = static_cast<double>(src.Get(tIdx, 1));
+-      in[2] = static_cast<double>(src.Get(tIdx, 2));
+-      this->Output->SetComponent(tIdx, 0,
+-                                 this->CutFunction->FunctionValue(in));
+-    }
+-  }
+-};
+-} // end anon namespace
+-
+ //----------------------------------------------------------------------------
+ void vtkCutter::StructuredGridCutter(vtkDataSet *dataSetInput,
+                                      vtkPolyData *thisOutput)
+@@ -262,13 +229,8 @@ void vtkCutter::StructuredGridCutter(vtkDataSet *dataSetInput,
+     contourData->GetPointData()->AddArray(cutScalars);
+   }
+ 
+-  vtkDataArray* dataArrayInput = input->GetPoints()->GetData();
+-  CutFunctionWorker worker(this->CutFunction, cutScalars);
+-  if (!vtkArrayDispatch::Dispatch::Execute(dataArrayInput, worker))
+-  {
+-    worker(dataArrayInput); // Use vtkDataArray API if dispatch fails.
+-  }
+-
++  vtkDataArray *dataArrayInput = input->GetPoints()->GetData();
++  this->CutFunction->EvaluateFunction(dataArrayInput, cutScalars);
+   int numContours = this->GetNumberOfContours();
+ 
+   this->GridSynchronizedTemplates->SetDebug(this->GetDebug());
