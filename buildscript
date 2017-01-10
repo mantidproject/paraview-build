@@ -86,6 +86,7 @@ git apply ${SCRIPT_DIR}/patches/2199.diff
 git apply ${SCRIPT_DIR}/patches/2274.diff
 git apply ${SCRIPT_DIR}/patches/2332.diff
 git apply ${SCRIPT_DIR}/patches/2337.diff
+git apply ${SCRIPT_DIR}/patches/2341.diff
 
 # Go to build area, setup and run
 cd ${BUILD_DIR}

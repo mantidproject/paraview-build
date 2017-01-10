@@ -88,6 +88,7 @@ cd %SRC_DIR%\%PARAVIEW_SRC%\VTK
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2274.diff
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2332.diff
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2337.diff
+"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2341.diff
 if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
