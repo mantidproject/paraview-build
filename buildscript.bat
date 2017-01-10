@@ -77,12 +77,12 @@ call:fetch-paraview
 cd %SRC_DIR%\%PARAVIEW_SRC%
 "%GitCmd%" config user.name "Bob T. Builder"
 "%GitCmd%" config user.email "builder@ornl.gov"
-"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\1211.diff
-"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\1273.diff
+"%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\1211.diff
+"%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\1273.diff
 cd %SRC_DIR%\%PARAVIEW_SRC%\VTK
 "%GitCmd%" config user.name "Bob T. Builder"
 "%GitCmd%" config user.email "builder@ornl.gov"
-"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2059.diff
+"%GitCmd%" apply --ignore-space-change --whitespace=fix %SCRIPT_DIR%\patches\2059.diff
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2146.diff
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2199.diff
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2274.diff
