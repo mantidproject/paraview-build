@@ -1,0 +1,251 @@
+diff --git a/Common/DataModel/vtkStructuredData.cxx b/Common/DataModel/vtkStructuredData.cxx
+index 22f7f15..c41f848 100644
+--- a/Common/DataModel/vtkStructuredData.cxx
++++ b/Common/DataModel/vtkStructuredData.cxx
+@@ -361,6 +361,119 @@ void vtkStructuredData::GetPointCells(vtkIdType ptId, vtkIdList *cellIds,
+ 
+ //------------------------------------------------------------------------------
+ void vtkStructuredData::GetCellNeighbors(vtkIdType cellId, vtkIdList *ptIds,
++                      vtkIdList *cellIds, int dim[3], int seedLoc[3])
++{
++  vtkIdType numPts = ptIds->GetNumberOfIds();
++  cellIds->Reset();
++
++  // Start by finding the "space" of the points in i-j-k space.
++  // The points define a point, line, or plane in topological space,
++  // which results in degrees of freedom in three, two or one direction.
++  // The numbers of DOF determines which neighbors to select.
++
++  // Start by finding a seed point
++  vtkIdType id0 = seedLoc[0] + seedLoc[1]*dim[0] + seedLoc[2]*dim[0]*dim[1];
++
++  // This defines the space around the seed
++  int offset[8][3];
++  offset[0][0] = -1; offset[0][1] = -1; offset[0][2] = -1;
++  offset[1][0] =  0; offset[1][1] = -1; offset[1][2] = -1;
++  offset[2][0] = -1; offset[2][1] =  0; offset[2][2] = -1;
++  offset[3][0] =  0; offset[3][1] =  0; offset[3][2] = -1;
++  offset[4][0] = -1; offset[4][1] = -1; offset[4][2] =  0;
++  offset[5][0] =  0; offset[5][1] = -1; offset[5][2] =  0;
++  offset[6][0] = -1; offset[6][1] =  0; offset[6][2] =  0;
++  offset[7][0] =  0; offset[7][1] =  0; offset[7][2] =  0;
++
++  // For the rest of the points, trim the seed region
++  // This is essentially an intersection of edge neighbors.
++  for (vtkIdType i = 0; i < numPts; i++)
++  {
++    //  Get the location of the point
++    vtkIdType id = ptIds->GetId(i);
++    if (id - 1 == id0)
++    {
++      offset[0][0] = -10;
++      offset[2][0] = -10;
++      offset[4][0] = -10;
++      offset[6][0] = -10;
++    }
++    else if (id + 1 == id0)
++    {
++      offset[1][0] = -10;
++      offset[3][0] = -10;
++      offset[5][0] = -10;
++      offset[7][0] = -10;
++    }
++    else if (id - dim[0]  == id0)
++    {
++      offset[0][1] = -10;
++      offset[1][1] = -10;
++      offset[4][1] = -10;
++      offset[5][1] = -10;
++    }
++    else if (id + dim[0] == id0)
++    {
++      offset[2][1] = -10;
++      offset[3][1] = -10;
++      offset[6][1] = -10;
++      offset[7][1] = -10;
++    }
++    else if (id - dim[0]*dim[1] == id0)
++    {
++      offset[0][2] = -10;
++      offset[1][2] = -10;
++      offset[2][2] = -10;
++      offset[3][2] = -10;
++    }
++    else if (id + dim[0]*dim[1] == id0)
++    {
++      offset[4][2] = -10;
++      offset[5][2] = -10;
++      offset[6][2] = -10;
++      offset[7][2] = -10;
++    }
++  }
++
++  // Load the non-trimmed cells
++  int cellDim[3];
++  for (int i = 0; i < 3; i++)
++  {
++    cellDim[i] = std::max(dim[i] - 1, 1);
++  }
++
++  for (int j = 0; j < 8; j++)
++  {
++    int i = 0, cellLoc[3];
++    for (; i < 3; i++)
++    {
++      if ( offset[j][i] != -10 )
++      {
++        cellLoc[i] = seedLoc[i] + offset[j][i];
++        if ( cellLoc[i] < 0 || cellLoc[i] >= cellDim[i] )
++        {
++          break;
++        }
++      }
++      else
++      {
++        break;
++      }
++    }
++    if ( i >= 3 ) //add cell
++    {
++      vtkIdType id = cellLoc[0] + cellLoc[1] * cellDim[0] +
++                     cellLoc[2] * cellDim[0] * cellDim[1];
++      if (id != cellId )
++      {
++        cellIds->InsertNextId(id);
++      }
++    }
++  }
++}
++
++//------------------------------------------------------------------------------
++void vtkStructuredData::GetCellNeighbors(vtkIdType cellId, vtkIdList *ptIds,
+                                         vtkIdList *cellIds, int dim[3])
+ {
+   int j, seedLoc[3], ptLoc[3], cellLoc[3];
+diff --git a/Common/DataModel/vtkStructuredData.h b/Common/DataModel/vtkStructuredData.h
+index 2fced26..30dc965 100644
+--- a/Common/DataModel/vtkStructuredData.h
++++ b/Common/DataModel/vtkStructuredData.h
+@@ -159,6 +159,8 @@ public:
+    */
+   static void GetCellNeighbors(vtkIdType cellId, vtkIdList *ptIds,
+                                vtkIdList *cellIds, int dim[3]);
++  static void GetCellNeighbors(vtkIdType cellId, vtkIdList *ptIds,
++                                 vtkIdList *cellIds, int dim[3], int seedLoc[3]);
+ 
+   /**
+    * Given a location in structured coordinates (i-j-k), and the extent
+diff --git a/Common/DataModel/vtkStructuredGrid.cxx b/Common/DataModel/vtkStructuredGrid.cxx
+index f1c0d15..703265b 100644
+--- a/Common/DataModel/vtkStructuredGrid.cxx
++++ b/Common/DataModel/vtkStructuredGrid.cxx
+@@ -1019,6 +1019,18 @@ void vtkStructuredGrid::GetDimensions (int dim[3])
+   dim[2] = extent[5] - extent[4] + 1;
+ }
+ 
++class CellVisibility
++{
++public:
++  CellVisibility(vtkStructuredGrid *input) : Input(input) {}
++  bool operator()(const vtkIdType id)
++  {
++    return !Input->IsCellVisible(id);
++  }
++private:
++  vtkStructuredGrid *Input;
++};
++
+ //----------------------------------------------------------------------------
+ void vtkStructuredGrid::GetCellNeighbors(vtkIdType cellId, vtkIdList *ptIds,
+                                          vtkIdList *cellIds)
+@@ -1044,16 +1056,43 @@ void vtkStructuredGrid::GetCellNeighbors(vtkIdType cellId, vtkIdList *ptIds,
+   // If blanking, remove blanked cells.
+   if(this->GetPointGhostArray() || this->GetCellGhostArray())
+   {
+-    int xcellId;
+-    for (int i=0; i<cellIds->GetNumberOfIds(); i++)
+-    {
+-      xcellId = cellIds->GetId(i);
+-      if ( !this->IsCellVisible(xcellId) )
+-      {
+-        cellIds->DeleteId(xcellId);
+-      }
+-    }
++    vtkIdType *pCellIds = cellIds->GetPointer(0);
++    vtkIdType *end = std::remove_if(pCellIds,pCellIds+cellIds->GetNumberOfIds(), CellVisibility(this));
++    cellIds->Resize(std::distance(pCellIds, end));
++  }
++
++ }
++
++//----------------------------------------------------------------------------
++void vtkStructuredGrid::GetCellNeighbors(vtkIdType cellId, vtkIdList *ptIds,
++                                         vtkIdList *cellIds, int *seedLoc)
++{
++  int numPtIds=ptIds->GetNumberOfIds();
++
++  // Use special methods for speed
++  switch (numPtIds)
++  {
++    case 0:
++      cellIds->Reset();
++      return;
++
++    case 1: case 2: case 4: //vertex, edge, face neighbors
++      vtkStructuredData::GetCellNeighbors(cellId, ptIds,cellIds,
++                                          this->GetDimensions(), seedLoc);
++      break;
++
++    default:
++      this->vtkDataSet::GetCellNeighbors(cellId, ptIds, cellIds);
++  }
++
++  // If blanking, remove blanked cells.
++  if(this->GetPointGhostArray() || this->GetCellGhostArray())
++  {
++    vtkIdType *pCellIds = cellIds->GetPointer(0);
++    vtkIdType *end = std::remove_if(pCellIds,pCellIds+cellIds->GetNumberOfIds(), CellVisibility(this));
++    cellIds->Resize(std::distance(pCellIds,end));
+   }
++
+ }
+ 
+ //----------------------------------------------------------------------------
+diff --git a/Common/DataModel/vtkStructuredGrid.h b/Common/DataModel/vtkStructuredGrid.h
+index c8c2dbc..37b204b 100644
+--- a/Common/DataModel/vtkStructuredGrid.h
++++ b/Common/DataModel/vtkStructuredGrid.h
+@@ -97,6 +97,8 @@ public:
+   int GetMaxCellSize() VTK_OVERRIDE {return 8;}; //hexahedron is the largest
+   void GetCellNeighbors(vtkIdType cellId, vtkIdList *ptIds,
+                         vtkIdList *cellIds) VTK_OVERRIDE;
++  void GetCellNeighbors(vtkIdType cellId, vtkIdList *ptIds,
++                        vtkIdList *cellIds, int *seedLoc);
+   //@}
+ 
+   //@{
+diff --git a/Filters/Geometry/vtkDataSetSurfaceFilter.cxx b/Filters/Geometry/vtkDataSetSurfaceFilter.cxx
+index 250c772..262da15 100644
+--- a/Filters/Geometry/vtkDataSetSurfaceFilter.cxx
++++ b/Filters/Geometry/vtkDataSetSurfaceFilter.cxx
+@@ -1139,10 +1139,19 @@ int vtkDataSetSurfaceFilter::StructuredWithBlankingExecute(vtkStructuredGrid *in
+             this->RecordOrigCellId(newCellId, cellId);
+             break;
+           case 3:
++            int even[3] = {i,j,k};
++            int odd[3] = {i+1,j+1,k+1};
+             for (int m = 0; m < cell->GetNumberOfFaces(); ++m)
+             {
+               face = cell->GetFace(m);
+-              input->GetCellNeighbors(cellId, face->PointIds, cellIds);
++              if (m%2)
++              {
++                input->GetCellNeighbors(cellId, face->PointIds, cellIds, odd);
++              }
++              else
++              {
++                input->GetCellNeighbors(cellId, face->PointIds, cellIds, even);
++              }
+               // faces with only blank neighbors count as external faces
+               bool noNeighbors = cellIds->GetNumberOfIds() <= 0;
+               for (vtkIdType ci = 0; ci < cellIds->GetNumberOfIds(); ci++)
