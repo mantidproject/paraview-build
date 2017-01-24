@@ -94,6 +94,15 @@ git apply ${SCRIPT_DIR}/patches/InsertPoints.diff
 # Go to build area, setup and run
 cd ${BUILD_DIR}
 PARAVIEW_BUILD=ParaView-${PV_VERSION3}
+
+###############################################################################
+# Check if this is a Python 3 build
+###############################################################################
+if [[ ${JOB_NAME} == *python3* ]]; then
+    PY3=true
+    PARAVIEW_BUILD="${PARAVIEW_BUILD}-python3"
+fi
+
 if [[ "$CLEAN" == true ]]; then
   echo "Clean build requested. Removing '$PARAVIEW_BUILD'"
   rm -rf $PARAVIEW_BUILD
@@ -104,6 +113,7 @@ cd ${PARAVIEW_BUILD}
 COMMON_CACHE_FILE=${SCRIPT_DIR}/common.cmake
 OSX_CACHE_FILE=${SCRIPT_DIR}/osx.cmake
 LINUX_CACHE_FILE=${SCRIPT_DIR}/linux.cmake
+PYTHON3_CACHE_FILE=${SCRIPT_DIR}/python3.cmake
 
 if [[ ${NODE_LABELS} == *rhel6* ]]; then
   SCL_ON_RHEL6="scl enable mantidlibs34 devtoolset-2"
@@ -114,7 +124,11 @@ fi
 if [[ "${ON_OSX}" == true ]]; then
   $SCL_ON_RHEL6 "cmake -C${COMMON_CACHE_FILE} -C${OSX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
 else
-  $SCL_ON_RHEL6 "cmake -C${COMMON_CACHE_FILE} -C${LINUX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
+    if [[ "${PY3}" == true ]]; then
+	$SCL_ON_RHEL6 "cmake -C${COMMON_CACHE_FILE} -C${LINUX_CACHE_FILE} -C${PYTHON3_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
+    else
+	$SCL_ON_RHEL6 "cmake -C${COMMON_CACHE_FILE} -C${LINUX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
+    fi
 fi
 
 $SCL_ON_RHEL6 "make -j ${BUILD_THREADS}"
