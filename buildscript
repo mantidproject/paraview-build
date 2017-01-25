@@ -77,7 +77,7 @@ git config user.name "Bob T. Builder"
 git config user.email "builder@ornl.gov"
 git apply ${SCRIPT_DIR}/patches/1211.diff
 git apply ${SCRIPT_DIR}/patches/1273.diff
-git apply ${SCRIPT_DIR}/patches/StructuredWithBlankingExecute.diff
+#git apply ${SCRIPT_DIR}/patches/StructuredWithBlankingExecute.diff
 cd VTK
 git config user.name "Bob T. Builder"
 git config user.email "builder@ornl.gov"
@@ -87,9 +87,9 @@ git apply ${SCRIPT_DIR}/patches/2274.diff
 git apply ${SCRIPT_DIR}/patches/2332.diff
 git apply ${SCRIPT_DIR}/patches/2337.diff
 git apply ${SCRIPT_DIR}/patches/2341.diff
-git apply ${SCRIPT_DIR}/patches/2381.diff
-git apply ${SCRIPT_DIR}/patches/GetCellNeighbors.diff
-git apply ${SCRIPT_DIR}/patches/InsertPoints.diff
+#git apply ${SCRIPT_DIR}/patches/2381.diff
+#git apply ${SCRIPT_DIR}/patches/GetCellNeighbors.diff
+#git apply ${SCRIPT_DIR}/patches/InsertPoints.diff
 
 # Go to build area, setup and run
 cd ${BUILD_DIR}
