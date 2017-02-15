@@ -1,11 +1,25 @@
+diff --git a/Common/Core/vtkObjectFactory.cxx b/Common/Core/vtkObjectFactory.cxx
+index ad8abe7..5b60dfc 100644
+--- a/Common/Core/vtkObjectFactory.cxx
++++ b/Common/Core/vtkObjectFactory.cxx
+@@ -70,7 +70,7 @@ vtkObject* vtkObjectFactory::CreateInstance(const char* vtkclassname,
+ }
+
+ #ifndef VTK_LEGACY_REMOVE
+-void vtkObjectFactory::ConstructInstance(const char *vtkclassname)
++void vtkObjectFactory::ConstructInstance(const char* vtkNotUsed(vtkclassname))
+ {
+   // no-op. Call vtkObjectBase::InitializeObjectBase() from the New()
+   // implementation instead. That way we ensure that the
 diff --git a/Common/DataModel/Testing/Cxx/TestPlane.cxx b/Common/DataModel/Testing/Cxx/TestPlane.cxx
-index cb7b666..af3e498 100644
+index cb7b666..f114bc3 100644
 --- a/Common/DataModel/Testing/Cxx/TestPlane.cxx
 +++ b/Common/DataModel/Testing/Cxx/TestPlane.cxx
-@@ -13,9 +13,14 @@
- 
+@@ -13,8 +13,13 @@
+
  =========================================================================*/
- 
+
++#include "vtkDataArrayAccessor.h"
 +#include "vtkFloatArray.h"
  #include "vtkMath.h"
 +#include "vtkMathUtilities.h"
@@ -13,43 +27,43 @@ index cb7b666..af3e498 100644
  #include "vtkPlane.h"
 +#include "vtkPoints.h"
  #include "vtkSmartPointer.h"
-+#include "vtkDataArrayAccessor.h"
- 
+
  #include <limits>
- 
-@@ -99,5 +104,68 @@ int TestPlane(int,char *[])
+@@ -99,5 +104,70 @@ int TestPlane(int,char *[])
    }
    }
- 
+
 +  {
 +    vtkNew<vtkPlane> plane;
 +    plane->SetOrigin(0.0, 0.0, 0.0);
 +    plane->SetNormal(0.0, 0.0, 1.0);
 +
 +    vtkIdType nPointsPerDimension = 11;
-+    vtkIdType nPoints = std::pow(nPointsPerDimension,3);
++    vtkIdType nPoints = std::pow(nPointsPerDimension, 3);
 +    vtkNew<vtkPoints> points;
 +    points->SetNumberOfPoints(nPoints);
 +
 +    //Generate a grid of points
 +    float in[3];
-+    float minX(-1.0f),minY(-1.0f),minZ(-1.0f);
-+    float increment(2.0f/(static_cast<float>(nPointsPerDimension)-1.0f));
++    float minX = -1.0f, minY = -1.0f, minZ = -1.0f;
++    float increment = 2.0f / (static_cast<float>(nPointsPerDimension) - 1.0f);
 +    vtkIdType pos = 0;
-+    for (int z = 0; z < nPointsPerDimension; ++z) {
++    for (int z = 0; z < nPointsPerDimension; ++z)
++    {
 +      in[2] = minZ + static_cast<float>(z) * increment;
-+      for (int y = 0; y < nPointsPerDimension; ++y) {
++      for (int y = 0; y < nPointsPerDimension; ++y)
++      {
 +        in[1] = minY + static_cast<float>(y) * increment;
-+        for (int x = 0; x < nPointsPerDimension; ++x) {
++        for (int x = 0; x < nPointsPerDimension; ++x)
++        {
 +          in[0] = minX + static_cast<float>(x) * increment;
-+          points->SetPoint(pos, in);
-+          ++pos;
++          points->SetPoint(pos++, in);
 +        }
 +      }
 +    }
 +    assert(pos == nPoints);
 +
-+    vtkDataArray *input = points->GetData();
++    vtkDataArray* input = points->GetData();
 +    vtkNew<vtkFloatArray> arrayOutput;
 +    arrayOutput->SetNumberOfComponents(1);
 +    arrayOutput->SetNumberOfTuples(nPoints);
@@ -65,18 +79,18 @@ index cb7b666..af3e498 100644
 +    vtkDataArrayAccessor<vtkFloatArray> output(loopOutput.GetPointer());
 +    vtkDataArrayAccessor<vtkFloatArray> pts(vtkFloatArray::SafeDownCast(input));
 +
-+    for(vtkIdType pt = 0; pt < nPoints;++pt)
++    for(vtkIdType pt = 0; pt < nPoints; ++pt)
 +    {
 +      double x[3];
 +      x[0] = pts.Get(pt,0);
 +      x[1] = pts.Get(pt,1);
 +      x[2] = pts.Get(pt,2);
-+      output.Set(pt,0,plane->FunctionValue(x));
++      output.Set(pt, 0, plane->FunctionValue(x));
 +    }
 +
 +    for (vtkIdType i = 0; i < nPoints; ++i)
 +    {
-+      if(!vtkMathUtilities::FuzzyCompare(arrayOutput->GetTypedComponent(i, 0),loopOutput->GetTypedComponent(i, 0)))
++      if(!vtkMathUtilities::FuzzyCompare(arrayOutput->GetTypedComponent(i, 0), loopOutput->GetTypedComponent(i, 0)))
 +      {
 +        std::cerr << "Array and point interfaces returning different results at index " << i << ": "
 +                  << arrayOutput->GetTypedComponent(i, 0) << " vs " << loopOutput->GetTypedComponent(i, 0) << '\n';
@@ -86,14 +100,89 @@ index cb7b666..af3e498 100644
 +  }
    return EXIT_SUCCESS;
  }
+diff --git a/Common/DataModel/vtkBox.h b/Common/DataModel/vtkBox.h
+index 283bb831..c1aeee0 100644
+--- a/Common/DataModel/vtkBox.h
++++ b/Common/DataModel/vtkBox.h
+@@ -49,9 +49,8 @@ public:
+   /**
+    * Evaluate box defined by the two points (pMin,pMax).
+    */
++  using vtkImplicitFunction::EvaluateFunction;
+   double EvaluateFunction(double x[3]) VTK_OVERRIDE;
+-  double EvaluateFunction(double x, double y, double z)
+-    {return this->vtkImplicitFunction::EvaluateFunction(x, y, z); }
+
+   /**
+    * Evaluate the gradient of the box.
+diff --git a/Common/DataModel/vtkCone.h b/Common/DataModel/vtkCone.h
+index abf95b1..9c9d17c 100644
+--- a/Common/DataModel/vtkCone.h
++++ b/Common/DataModel/vtkCone.h
+@@ -49,9 +49,8 @@ public:
+   /**
+    * Evaluate cone equation.
+    */
++  using vtkImplicitFunction::EvaluateFunction;
+   double EvaluateFunction(double x[3]) VTK_OVERRIDE;
+-  double EvaluateFunction(double x, double y, double z)
+-    {return this->vtkImplicitFunction::EvaluateFunction(x, y, z); } ;
+   //@}
+
+   /**
+diff --git a/Common/DataModel/vtkCylinder.h b/Common/DataModel/vtkCylinder.h
+index 3d4d471..dc66094 100644
+--- a/Common/DataModel/vtkCylinder.h
++++ b/Common/DataModel/vtkCylinder.h
+@@ -54,9 +54,8 @@ public:
+   /**
+    * Evaluate cylinder equation F(r) = r^2 - Radius^2.
+    */
++  using vtkImplicitFunction::EvaluateFunction;
+   double EvaluateFunction(double x[3]) VTK_OVERRIDE;
+-  double EvaluateFunction(double x, double y, double z)
+-    {return this->vtkImplicitFunction::EvaluateFunction(x, y, z); } ;
+   //@}
+
+   /**
+diff --git a/Common/DataModel/vtkImplicitBoolean.h b/Common/DataModel/vtkImplicitBoolean.h
+index 49410a0..c4ee2bf 100644
+--- a/Common/DataModel/vtkImplicitBoolean.h
++++ b/Common/DataModel/vtkImplicitBoolean.h
+@@ -63,9 +63,8 @@ public:
+   /**
+    * Evaluate boolean combinations of implicit function using current operator.
+    */
++  using vtkImplicitFunction::EvaluateFunction;
+   double EvaluateFunction(double x[3]) VTK_OVERRIDE;
+-  double EvaluateFunction(double x, double y, double z)
+-    {return this->vtkImplicitFunction::EvaluateFunction(x, y, z); } ;
+   //@}
+
+   /**
+diff --git a/Common/DataModel/vtkImplicitDataSet.h b/Common/DataModel/vtkImplicitDataSet.h
+index e964173..9dec851 100644
+--- a/Common/DataModel/vtkImplicitDataSet.h
++++ b/Common/DataModel/vtkImplicitDataSet.h
+@@ -67,9 +67,8 @@ public:
+    * Evaluate the implicit function. This returns the interpolated scalar value
+    * at x[3].
+    */
++  using vtkImplicitFunction::EvaluateFunction;
+   double EvaluateFunction(double x[3]) VTK_OVERRIDE;
+-  double EvaluateFunction(double x, double y, double z)
+-    {return this->vtkImplicitFunction::EvaluateFunction(x, y, z); } ;
+   //@}
+
+   /**
 diff --git a/Common/DataModel/vtkImplicitFunction.cxx b/Common/DataModel/vtkImplicitFunction.cxx
-index 3190764..159304b 100644
+index 3190764..8abbd85 100644
 --- a/Common/DataModel/vtkImplicitFunction.cxx
 +++ b/Common/DataModel/vtkImplicitFunction.cxx
 @@ -14,8 +14,11 @@
  =========================================================================*/
  #include "vtkImplicitFunction.h"
- 
+
 -#include "vtkMath.h"
  #include "vtkAbstractTransform.h"
 +#include "vtkArrayDispatch.h"
@@ -101,19 +190,19 @@ index 3190764..159304b 100644
 +#include "vtkDataArrayAccessor.h"
 +#include "vtkMath.h"
  #include "vtkTransform.h"
- 
+
  vtkCxxSetObjectMacro(vtkImplicitFunction,Transform,vtkAbstractTransform);
 @@ -32,6 +35,103 @@ vtkImplicitFunction::~vtkImplicitFunction()
    this->SetTransform(static_cast<vtkAbstractTransform*>(NULL));
  }
- 
+
 +namespace {
 +
 +template <class Func> struct FunctionWorker {
 +  Func F;
 +  FunctionWorker(Func f) : F(f) {}
 +  template <typename SourceArray, typename DestinationArray>
-+  void operator()(SourceArray *input, DestinationArray *output)
++  void operator()(SourceArray* input, DestinationArray* output)
 +  {
 +    VTK_ASSUME(input->GetNumberOfComponents() == 3);
 +    VTK_ASSUME(output->GetNumberOfComponents() == 1);
@@ -137,19 +226,19 @@ index 3190764..159304b 100644
 +
 +class SimpleFunction {
 +public:
-+  SimpleFunction(vtkImplicitFunction *function) : Function(function) {}
++  SimpleFunction(vtkImplicitFunction* function) : Function(function) {}
 +  double operator()(double in[3])
 +  {
 +    return this->Function->EvaluateFunction(in);
 +  }
 +private:
-+  vtkImplicitFunction *Function;
++  vtkImplicitFunction* Function;
 +};
 +
 +class TransformFunction {
 +public:
-+  TransformFunction(vtkImplicitFunction *function,
-+                    vtkAbstractTransform *transform)
++  TransformFunction(vtkImplicitFunction* function,
++                    vtkAbstractTransform* transform)
 +      : Function(function), Transform(transform) {}
 +  double operator()(double in[3])
 +  {
@@ -157,14 +246,14 @@ index 3190764..159304b 100644
 +    return this->Function->EvaluateFunction(in);
 +  }
 +private:
-+  vtkImplicitFunction *Function;
-+  vtkAbstractTransform *Transform;
++  vtkImplicitFunction* Function;
++  vtkAbstractTransform* Transform;
 +};
 +
 +} // end anon namespace
 +
-+void vtkImplicitFunction::FunctionValue(vtkDataArray *input,
-+                                        vtkDataArray *output)
++void vtkImplicitFunction::FunctionValue(vtkDataArray* input,
++                                        vtkDataArray* output)
 +{
 +  if (!this->Transform)
 +  {
@@ -185,8 +274,8 @@ index 3190764..159304b 100644
 +  }
 +}
 +
-+void vtkImplicitFunction::EvaluateFunction(vtkDataArray *input,
-+                                           vtkDataArray *output)
++void vtkImplicitFunction::EvaluateFunction(vtkDataArray* input,
++                                           vtkDataArray* output)
 +{
 +
 +  // defend against uninitialized onput datasets.
@@ -208,68 +297,163 @@ index 3190764..159304b 100644
  // transformed through transform (if provided).
  double vtkImplicitFunction::FunctionValue(const double x[3])
 diff --git a/Common/DataModel/vtkImplicitFunction.h b/Common/DataModel/vtkImplicitFunction.h
-index 8778ab4..aad5f7a 100644
+index 8778ab4..56e5fb4 100644
 --- a/Common/DataModel/vtkImplicitFunction.h
 +++ b/Common/DataModel/vtkImplicitFunction.h
 @@ -53,6 +53,8 @@
  #include "vtkCommonDataModelModule.h" // For export macro
  #include "vtkObject.h"
- 
+
 +class vtkDataArray;
 +
  class vtkAbstractTransform;
- 
+
  class VTKCOMMONDATAMODEL_EXPORT vtkImplicitFunction : public vtkObject
 @@ -72,6 +74,7 @@ public:
     * Evaluate function at position x-y-z and return value. Point x[3] is
     * transformed through transform (if provided).
     */
-+  virtual void FunctionValue(vtkDataArray *input, vtkDataArray *output);
++  virtual void FunctionValue(vtkDataArray* input, vtkDataArray* output);
    double FunctionValue(const double x[3]);
    double FunctionValue(double x, double y, double z) {
      double xyz[3] = {x, y, z}; return this->FunctionValue(xyz); };
-@@ -108,6 +111,9 @@ public:
+@@ -108,7 +111,8 @@ public:
     * any derived class.
     */
    virtual double EvaluateFunction(double x[3]) = 0;
-+
-+  virtual void EvaluateFunction(vtkDataArray *input, vtkDataArray *output);
-+
-   double EvaluateFunction(double x, double y, double z) {
+-  double EvaluateFunction(double x, double y, double z) {
++  virtual void EvaluateFunction(vtkDataArray* input, vtkDataArray* output);
++  virtual double EvaluateFunction(double x, double y, double z) {
      double xyz[3] = {x, y, z}; return this->EvaluateFunction(xyz); };
    //@}
+
+diff --git a/Common/DataModel/vtkImplicitHalo.h b/Common/DataModel/vtkImplicitHalo.h
+index ff99ff6..c50920e 100644
+--- a/Common/DataModel/vtkImplicitHalo.h
++++ b/Common/DataModel/vtkImplicitHalo.h
+@@ -50,11 +50,8 @@ public:
+   /**
+    * Evaluate the equation.
+    */
++  using vtkImplicitFunction::EvaluateFunction;
+   double EvaluateFunction(double x[3]) VTK_OVERRIDE;
+-  virtual double EvaluateFunction(double x, double y, double z)
+-  {
+-      return this->vtkImplicitFunction::EvaluateFunction(x, y, z);
+-  }
+   //@}
+
+   /**
+diff --git a/Common/DataModel/vtkImplicitSelectionLoop.h b/Common/DataModel/vtkImplicitSelectionLoop.h
+index b6ad188..a4fe440 100644
+--- a/Common/DataModel/vtkImplicitSelectionLoop.h
++++ b/Common/DataModel/vtkImplicitSelectionLoop.h
+@@ -74,9 +74,8 @@ public:
+   /**
+    * Evaluate selection loop returning a signed distance.
+    */
++  using vtkImplicitFunction::EvaluateFunction;
+   double EvaluateFunction(double x[3]) VTK_OVERRIDE;
+-  double EvaluateFunction(double x, double y, double z)
+-    {return this->vtkImplicitFunction::EvaluateFunction(x, y, z); } ;
+   //@}
+
+   /**
+diff --git a/Common/DataModel/vtkImplicitSum.h b/Common/DataModel/vtkImplicitSum.h
+index f6d39e3..5d6a015 100644
+--- a/Common/DataModel/vtkImplicitSum.h
++++ b/Common/DataModel/vtkImplicitSum.h
+@@ -44,9 +44,8 @@ public:
+   /**
+    * Evaluate implicit function using current functions and weights.
+    */
++  using vtkImplicitFunction::EvaluateFunction;
+   double EvaluateFunction(double x[3]) VTK_OVERRIDE;
+-  double EvaluateFunction(double x, double y, double z)
+-    {return this->vtkImplicitFunction::EvaluateFunction(x, y, z); } ;
+   //@}
+
+   /**
+diff --git a/Common/DataModel/vtkImplicitVolume.h b/Common/DataModel/vtkImplicitVolume.h
+index 4fbd797..b53b61e 100644
+--- a/Common/DataModel/vtkImplicitVolume.h
++++ b/Common/DataModel/vtkImplicitVolume.h
+@@ -70,9 +70,8 @@ public:
+    * Evaluate the ImplicitVolume. This returns the interpolated scalar value
+    * at x[3].
+    */
++  using vtkImplicitFunction::EvaluateFunction;
+   double EvaluateFunction(double x[3]) VTK_OVERRIDE;
+-  double EvaluateFunction(double x, double y, double z)
+-    {return this->vtkImplicitFunction::EvaluateFunction(x, y, z); } ;
+   //@}
+
+   /**
+diff --git a/Common/DataModel/vtkImplicitWindowFunction.h b/Common/DataModel/vtkImplicitWindowFunction.h
+index 6454260..00baca8 100644
+--- a/Common/DataModel/vtkImplicitWindowFunction.h
++++ b/Common/DataModel/vtkImplicitWindowFunction.h
+@@ -51,9 +51,8 @@ public:
+   /**
+    * Evaluate window function.
+    */
++  using vtkImplicitFunction::EvaluateFunction;
+   double EvaluateFunction(double x[3]) VTK_OVERRIDE;
+-  double EvaluateFunction(double x, double y, double z)
+-    {return this->vtkImplicitFunction::EvaluateFunction(x, y, z); } ;
+   //@}
+
+   /**
+diff --git a/Common/DataModel/vtkPerlinNoise.h b/Common/DataModel/vtkPerlinNoise.h
+index 3d8b28e..d56378d 100644
+--- a/Common/DataModel/vtkPerlinNoise.h
++++ b/Common/DataModel/vtkPerlinNoise.h
+@@ -50,9 +50,8 @@ public:
+   /**
+    * Evaluate PerlinNoise function.
+    */
++  using vtkImplicitFunction::EvaluateFunction;
+   double EvaluateFunction(double x[3]) VTK_OVERRIDE;
+-  double EvaluateFunction(double x, double y, double z)
+-    {return this->vtkImplicitFunction::EvaluateFunction(x, y, z); } ;
+   //@}
+
+   /**
 diff --git a/Common/DataModel/vtkPlane.cxx b/Common/DataModel/vtkPlane.cxx
-index 51ff3dd..053e87e 100644
+index 51ff3dd..009bfc2 100644
 --- a/Common/DataModel/vtkPlane.cxx
 +++ b/Common/DataModel/vtkPlane.cxx
-@@ -13,8 +13,12 @@
- 
+@@ -13,8 +13,15 @@
+
  =========================================================================*/
  #include "vtkPlane.h"
++
 +#include "vtkArrayDispatch.h"
 +#include "vtkAssume.h"
 +#include "vtkDataArrayAccessor.h"
  #include "vtkMath.h"
  #include "vtkObjectFactory.h"
 +#include "vtkSMPTools.h"
- 
++
++#include <algorithm>
+
  vtkStandardNewMacro(vtkPlane);
- 
-@@ -212,6 +216,66 @@ int vtkPlane::IntersectWithLine(double p1[3], double p2[3], double n[3],
+
+@@ -212,6 +219,69 @@ int vtkPlane::IntersectWithLine(double p1[3], double p2[3], double n[3],
    }
  }
- 
+
 +namespace {
-+template <typename InputArrayType, typename OutputArrayType> struct CutWorker {
++template <typename InputArrayType, typename OutputArrayType> struct CutWorker
++{
 +  typedef typename vtkDataArrayAccessor<InputArrayType>::APIType InputValueType;
-+  typedef
-+      typename vtkDataArrayAccessor<InputArrayType>::APIType OutputValueType;
++  typedef typename vtkDataArrayAccessor<InputArrayType>::APIType OutputValueType;
 +  OutputValueType Normal[3];
 +  OutputValueType Origin[3];
 +  vtkDataArrayAccessor<InputArrayType> src;
 +  vtkDataArrayAccessor<OutputArrayType> dest;
 +
-+  CutWorker(InputArrayType *in, OutputArrayType *out) : src(in), dest(out) {}
++  CutWorker(InputArrayType* in, OutputArrayType* out) : src(in), dest(out) {}
 +  void operator()(vtkIdType begin, vtkIdType end)
 +  {
 +    for (vtkIdType tIdx = begin; tIdx < end; ++tIdx)
@@ -287,18 +471,20 @@ index 51ff3dd..053e87e 100644
 +  }
 +};
 +
-+struct CutFunctionWorker {
++struct CutFunctionWorker
++{
 +  double Normal[3];
 +  double Origin[3];
-+  CutFunctionWorker(double n[3], double o[3]) {
++  CutFunctionWorker(double n[3], double o[3])
++  {
 +    std::copy_n(n, 3, this->Normal);
 +    std::copy_n(o, 3, this->Origin);
 +  }
 +  template <typename InputArrayType, typename OutputArrayType>
-+  void operator()(InputArrayType *input, OutputArrayType *output) {
++  void operator()(InputArrayType* input, OutputArrayType* output)
++  {
 +    VTK_ASSUME(input->GetNumberOfComponents() == 3);
 +    VTK_ASSUME(output->GetNumberOfComponents() == 1);
-+
 +    vtkIdType numTuples = input->GetNumberOfTuples();
 +    CutWorker<InputArrayType, OutputArrayType> cut(input, output);
 +    std::copy_n(Normal, 3, cut.Normal);
@@ -308,13 +494,14 @@ index 51ff3dd..053e87e 100644
 +};
 +} // end anon namespace
 +
-+void vtkPlane::EvaluateFunction(vtkDataArray *input, vtkDataArray *output) {
++void vtkPlane::EvaluateFunction(vtkDataArray* input, vtkDataArray* output)
++{
 +  CutFunctionWorker worker(this->Normal, this->Origin);
 +  typedef vtkTypeList_Create_2(float, double) InputTypes;
 +  typedef vtkTypeList_Create_2(float, double) OutputTypes;
-+  typedef vtkArrayDispatch::Dispatch2ByValueType<InputTypes, OutputTypes>
-+      MyDispatch;
-+  if (!MyDispatch::Execute(input, output, worker)) {
++  typedef vtkArrayDispatch::Dispatch2ByValueType<InputTypes, OutputTypes> MyDispatch;
++  if (!MyDispatch::Execute(input, output, worker))
++  {
 +    worker(input, output); // Use vtkDataArray API if dispatch fails.
 +  }
 +}
@@ -323,25 +510,104 @@ index 51ff3dd..053e87e 100644
  {
    return this->IntersectWithLine(p1, p2, this->GetNormal(), this->GetOrigin(), t, x);
 diff --git a/Common/DataModel/vtkPlane.h b/Common/DataModel/vtkPlane.h
-index c07efef..f392932 100644
+index c07efef..7a11dd6 100644
 --- a/Common/DataModel/vtkPlane.h
 +++ b/Common/DataModel/vtkPlane.h
-@@ -43,6 +43,7 @@ public:
+@@ -43,9 +43,9 @@ public:
    /**
     * Evaluate plane equation for point x[3].
     */
-+  void EvaluateFunction(vtkDataArray *input, vtkDataArray *output) VTK_OVERRIDE;
++  using vtkImplicitFunction::EvaluateFunction;
++  void EvaluateFunction(vtkDataArray* input, vtkDataArray* output) VTK_OVERRIDE;
    double EvaluateFunction(double x[3]) VTK_OVERRIDE;
-   double EvaluateFunction(double x, double y, double z)
-     {return this->vtkImplicitFunction::EvaluateFunction(x, y, z); } ;
+-  double EvaluateFunction(double x, double y, double z)
+-    {return this->vtkImplicitFunction::EvaluateFunction(x, y, z); } ;
+   //@}
+
+   /**
+diff --git a/Common/DataModel/vtkPlanes.h b/Common/DataModel/vtkPlanes.h
+index 21f5e81..c839714 100644
+--- a/Common/DataModel/vtkPlanes.h
++++ b/Common/DataModel/vtkPlanes.h
+@@ -56,9 +56,8 @@ public:
+   /**
+    * Evaluate plane equations. Return smallest absolute value.
+    */
++  using vtkImplicitFunction::EvaluateFunction;
+   double EvaluateFunction(double x[3]) VTK_OVERRIDE;
+-  double EvaluateFunction(double x, double y, double z)
+-    {return this->vtkImplicitFunction::EvaluateFunction(x, y, z); } ;
+   //@}
+
+   /**
+diff --git a/Common/DataModel/vtkPolyPlane.h b/Common/DataModel/vtkPolyPlane.h
+index 317c5a9..040ba4f 100644
+--- a/Common/DataModel/vtkPolyPlane.h
++++ b/Common/DataModel/vtkPolyPlane.h
+@@ -50,9 +50,8 @@ public:
+   /**
+    * Evaluate plane equation for point x[3].
+    */
++  using vtkImplicitFunction::EvaluateFunction;
+   double EvaluateFunction(double x[3]) VTK_OVERRIDE;
+-  double EvaluateFunction(double x, double y, double z)
+-    {return this->vtkImplicitFunction::EvaluateFunction(x, y, z); } ;
+   //@}
+
+   /**
+diff --git a/Common/DataModel/vtkQuadric.h b/Common/DataModel/vtkQuadric.h
+index 5fe125d..0c42a4f 100644
+--- a/Common/DataModel/vtkQuadric.h
++++ b/Common/DataModel/vtkQuadric.h
+@@ -42,9 +42,8 @@ public:
+   /**
+    * Evaluate quadric equation.
+    */
++  using vtkImplicitFunction::EvaluateFunction;
+   double EvaluateFunction(double x[3]) VTK_OVERRIDE;
+-  double EvaluateFunction(double x, double y, double z)
+-    {return this->vtkImplicitFunction::EvaluateFunction(x, y, z); } ;
+   //@}
+
+   /**
+diff --git a/Common/DataModel/vtkSphere.h b/Common/DataModel/vtkSphere.h
+index 209b509..8a177dd 100644
+--- a/Common/DataModel/vtkSphere.h
++++ b/Common/DataModel/vtkSphere.h
+@@ -43,9 +43,8 @@ public:
+   /**
+    * Evaluate sphere equation ((x-x0)^2 + (y-y0)^2 + (z-z0)^2) - R^2.
+    */
++  using vtkImplicitFunction::EvaluateFunction;
+   double EvaluateFunction(double x[3]) VTK_OVERRIDE;
+-  double EvaluateFunction(double x, double y, double z)
+-    {return this->vtkImplicitFunction::EvaluateFunction(x, y, z); } ;
+   //@}
+
+   /**
+diff --git a/Common/DataModel/vtkSuperquadric.h b/Common/DataModel/vtkSuperquadric.h
+index cba34dc..92fc1af 100644
+--- a/Common/DataModel/vtkSuperquadric.h
++++ b/Common/DataModel/vtkSuperquadric.h
+@@ -60,9 +60,8 @@ public:
+   void PrintSelf(ostream& os, vtkIndent indent) VTK_OVERRIDE;
+
+   // ImplicitFunction interface
++  using vtkImplicitFunction::EvaluateFunction;
+   double EvaluateFunction(double x[3]) VTK_OVERRIDE;
+-  double EvaluateFunction(double x, double y, double z)
+-    {return this->vtkImplicitFunction::EvaluateFunction(x, y, z); } ;
+   void EvaluateGradient(double x[3], double g[3]) VTK_OVERRIDE;
+
+   //@{
 diff --git a/Filters/Core/vtkCutter.cxx b/Filters/Core/vtkCutter.cxx
-index 73228a9..f2f1c9b 100644
+index 73228a9..86c91e6 100644
 --- a/Filters/Core/vtkCutter.cxx
 +++ b/Filters/Core/vtkCutter.cxx
 @@ -201,39 +201,6 @@ void vtkCutter::StructuredPointsCutter(vtkDataSet *dataSetInput,
    contourData->Delete();
  }
- 
+
 -namespace {
 -struct CutFunctionWorker
 -{
@@ -378,19 +644,29 @@ index 73228a9..f2f1c9b 100644
  //----------------------------------------------------------------------------
  void vtkCutter::StructuredGridCutter(vtkDataSet *dataSetInput,
                                       vtkPolyData *thisOutput)
-@@ -262,13 +229,8 @@ void vtkCutter::StructuredGridCutter(vtkDataSet *dataSetInput,
-     contourData->GetPointData()->AddArray(cutScalars);
+@@ -263,12 +230,7 @@ void vtkCutter::StructuredGridCutter(vtkDataSet *dataSetInput,
    }
- 
--  vtkDataArray* dataArrayInput = input->GetPoints()->GetData();
+
+   vtkDataArray* dataArrayInput = input->GetPoints()->GetData();
 -  CutFunctionWorker worker(this->CutFunction, cutScalars);
 -  if (!vtkArrayDispatch::Dispatch::Execute(dataArrayInput, worker))
 -  {
 -    worker(dataArrayInput); // Use vtkDataArray API if dispatch fails.
 -  }
 -
-+  vtkDataArray *dataArrayInput = input->GetPoints()->GetData();
 +  this->CutFunction->EvaluateFunction(dataArrayInput, cutScalars);
    int numContours = this->GetNumberOfContours();
- 
+
    this->GridSynchronizedTemplates->SetDebug(this->GetDebug());
+diff --git a/Filters/Core/vtkImplicitPolyDataDistance.h b/Filters/Core/vtkImplicitPolyDataDistance.h
+index fa2eb3e..9b7912c 100644
+--- a/Filters/Core/vtkImplicitPolyDataDistance.h
++++ b/Filters/Core/vtkImplicitPolyDataDistance.h
+@@ -60,6 +60,7 @@ public:
+   /**
+    * Evaluate plane equation of nearest triangle to point x[3].
+    */
++  using vtkImplicitFunction::EvaluateFunction;
+   double EvaluateFunction(double x[3]) VTK_OVERRIDE;
+
+   /**

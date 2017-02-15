@@ -1,0 +1,20 @@
+diff --git a/ParaViewCore/VTKExtensions/Rendering/vtkPVGeometryFilter.cxx b/ParaViewCore/VTKExtensions/Rendering/vtkPVGeometryFilter.cxx
+index 15b6a7a..45a273a 100644
+--- a/ParaViewCore/VTKExtensions/Rendering/vtkPVGeometryFilter.cxx
++++ b/ParaViewCore/VTKExtensions/Rendering/vtkPVGeometryFilter.cxx
+@@ -1310,7 +1310,7 @@ void vtkPVGeometryFilter::StructuredGridExecute(vtkStructuredGrid* input, vtkPol
+     {
+       if (input->HasAnyBlankCells())
+       {
+-        this->DataSetSurfaceFilter->DataSetExecute(input, output);
++        this->DataSetSurfaceFilter->StructuredWithBlankingExecute(input, output);
+       }
+       else
+       {
+diff --git a/VTK b/VTK
+index e4fd6ab..aad5c4e 160000
+--- a/VTK
++++ b/VTK
+@@ -1 +1 @@
+-Subproject commit e4fd6ab4bf95c84614937d31be0da3eefb0842c9
++Subproject commit aad5c4e969fde331a922d6c2469c80a60011ef0d

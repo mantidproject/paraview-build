@@ -20,7 +20,7 @@
 SCRIPT_DIR=$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd)
 
 # Set the ParaView version to build
-PV_VERSION=v5.2.0
+PV_VERSION=v5.3.0-RC1
 PV_VERSION2=${PV_VERSION%.*}
 PV_VERSION3=${PV_VERSION/v/}
 
@@ -76,20 +76,13 @@ git submodule foreach git reset --hard
 git config user.name "Bob T. Builder"
 git config user.email "builder@ornl.gov"
 git apply ${SCRIPT_DIR}/patches/1211.diff
-git apply ${SCRIPT_DIR}/patches/1273.diff
-#git apply ${SCRIPT_DIR}/patches/StructuredWithBlankingExecute.diff
+git apply ${SCRIPT_DIR}/patches/1382.diff
 cd VTK
 git config user.name "Bob T. Builder"
 git config user.email "builder@ornl.gov"
-git apply ${SCRIPT_DIR}/patches/2059.diff
-git apply ${SCRIPT_DIR}/patches/2199.diff
-git apply ${SCRIPT_DIR}/patches/2274.diff
-#git apply ${SCRIPT_DIR}/patches/2332.diff
 git apply ${SCRIPT_DIR}/patches/2337.diff
-git apply ${SCRIPT_DIR}/patches/2341.diff
-#git apply ${SCRIPT_DIR}/patches/2381.diff
-#git apply ${SCRIPT_DIR}/patches/GetCellNeighbors.diff
-#git apply ${SCRIPT_DIR}/patches/InsertPoints.diff
+git apply ${SCRIPT_DIR}/patches/a6c9d491c7cfc9c0351401f08601d009045afc48.diff
+git apply ${SCRIPT_DIR}/patches/8a2dc60982f5256538b3ff9d036eae4183fc2a47.diff
 
 # Go to build area, setup and run
 cd ${BUILD_DIR}

@@ -1,23 +1,15 @@
 diff --git a/ParaViewCore/ClientServerCore/Rendering/vtkGeometryRepresentation.cxx b/ParaViewCore/ClientServerCore/Rendering/vtkGeometryRepresentation.cxx
-index c60d4a0..ecf6568 100644
+index 0a53543..d69ede1 100644
 --- a/ParaViewCore/ClientServerCore/Rendering/vtkGeometryRepresentation.cxx
 +++ b/ParaViewCore/ClientServerCore/Rendering/vtkGeometryRepresentation.cxx
-@@ -21,6 +21,7 @@
- #endif
- #include "vtkAlgorithmOutput.h"
- #include "vtkBoundingBox.h"
-+#include "vtkCallbackCommand.h"
- #include "vtkCommand.h"
- #include "vtkCompositeDataDisplayAttributes.h"
- #include "vtkCompositeDataIterator.h"
-@@ -101,9 +102,25 @@ vtkStandardNewMacro(vtkGeometryRepresentationMultiBlockMaker);
+@@ -102,9 +102,25 @@ vtkStandardNewMacro(vtkGeometryRepresentationMultiBlockMaker);
  
  vtkStandardNewMacro(vtkGeometryRepresentation);
  //----------------------------------------------------------------------------
 +
 +void ProgressFunction(vtkObject *caller, long unsigned int vtkNotUsed(eventId),
 +                      void *clientData, void *vtkNotUsed(callData)) {
-+ vtkPVGeometryFilter *filter = dynamic_cast<vtkPVGeometryFilter*>(caller);
++ vtkPVGeometryFilter *filter = vtkPVGeometryFilter::SafeDownCast(caller);
 + vtkGeometryRepresentation* parent = reinterpret_cast<vtkGeometryRepresentation *>(clientData);
 + if(filter && parent)
 + {
@@ -37,7 +29,7 @@ index c60d4a0..ecf6568 100644
    this->MultiBlockMaker = vtkGeometryRepresentationMultiBlockMaker::New();
    this->Decimator = vtkQuadricClustering::New();
 diff --git a/ParaViewCore/VTKExtensions/Rendering/vtkPVGeometryFilter.cxx b/ParaViewCore/VTKExtensions/Rendering/vtkPVGeometryFilter.cxx
-index 34f5ca6..6d760ec 100644
+index 15b6a7a..f5d1c62 100644
 --- a/ParaViewCore/VTKExtensions/Rendering/vtkPVGeometryFilter.cxx
 +++ b/ParaViewCore/VTKExtensions/Rendering/vtkPVGeometryFilter.cxx
 @@ -162,9 +162,9 @@ vtkPVGeometryFilter::vtkPVGeometryFilter()
@@ -71,7 +63,7 @@ index 34f5ca6..6d760ec 100644
 +                                                   void*)
  {
 +  vtkPVGeometryFilter *parent = reinterpret_cast<vtkPVGeometryFilter*>(clientData);
-+  vtkDataSetSurfaceFilter *algorithm = dynamic_cast<vtkDataSetSurfaceFilter*>(arg);
++  vtkDataSetSurfaceFilter *algorithm = vtkDataSetSurfaceFilter::SafeDownCast(arg);
    // This limits progress for only the DataSetSurfaceFilter.
 -  float progress = algorithm->GetProgress();
 -  if (progress > 0 && progress < 1)
@@ -95,7 +87,7 @@ index 34f5ca6..6d760ec 100644
  }
  
 diff --git a/ParaViewCore/VTKExtensions/Rendering/vtkPVGeometryFilter.h b/ParaViewCore/VTKExtensions/Rendering/vtkPVGeometryFilter.h
-index 0c3c8e0..5b2c81a 100644
+index a3f19d8..92cb4e4 100644
 --- a/ParaViewCore/VTKExtensions/Rendering/vtkPVGeometryFilter.h
 +++ b/ParaViewCore/VTKExtensions/Rendering/vtkPVGeometryFilter.h
 @@ -295,8 +295,7 @@ protected:
