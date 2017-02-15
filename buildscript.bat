@@ -83,8 +83,8 @@ cd %SRC_DIR%\%PARAVIEW_SRC%\VTK
 "%GitCmd%" config user.name "Bob T. Builder"
 "%GitCmd%" config user.email "builder@ornl.gov"
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2337.diff
-"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\a6c9d491c7cfc9c0351401f08601d009045afc48.diff
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\8a2dc60982f5256538b3ff9d036eae4183fc2a47.diff
+"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\a6c9d491c7cfc9c0351401f08601d009045afc48.diff
 if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
