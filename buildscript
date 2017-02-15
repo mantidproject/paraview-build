@@ -83,7 +83,7 @@ git config user.email "builder@ornl.gov"
 git apply ${SCRIPT_DIR}/patches/2337.diff
 git apply ${SCRIPT_DIR}/patches/a6c9d491c7cfc9c0351401f08601d009045afc48.diff
 git apply ${SCRIPT_DIR}/patches/8a2dc60982f5256538b3ff9d036eae4183fc2a47.diff
-
+git apply ${SCRIPT_DIR}/patches/2474.diff
 # Go to build area, setup and run
 cd ${BUILD_DIR}
 PARAVIEW_BUILD=ParaView-${PV_VERSION3}
