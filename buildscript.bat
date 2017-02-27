@@ -21,7 +21,7 @@ set MANTID_THIRD_PARTY=%1
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Set the ParaView version to build
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-set PV_VERSION=v5.3.0-RC1
+set PV_VERSION=v5.3.0-RC2
 set PV_VERSION3=%PV_VERSION:v=%
 echo Building ParaView %PV_VERSION%
 
@@ -82,9 +82,6 @@ cd %SRC_DIR%\%PARAVIEW_SRC%
 cd %SRC_DIR%\%PARAVIEW_SRC%\VTK
 "%GitCmd%" config user.name "Bob T. Builder"
 "%GitCmd%" config user.email "builder@ornl.gov"
-"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2337.diff
-"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\8a2dc60982f5256538b3ff9d036eae4183fc2a47.diff
-"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\a6c9d491c7cfc9c0351401f08601d009045afc48.diff
 if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -100,7 +97,7 @@ cd /D %BUILD_DIR%
 
 set PV_BUILD_DIR=ParaView-%PV_VERSION3%
 if not "%CLEAN%" == "%CLEAN:true=%" (
-  echo Removing %PV_BUILD_DIR% 
+  echo Removing %PV_BUILD_DIR%
   rmdir /S /Q %PV_BUILD_DIR%
 )
 if not EXIST %PV_BUILD_DIR% (
