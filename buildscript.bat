@@ -113,12 +113,12 @@ set WINDOWS_CACHE_FILE=%SCRIPT_DIR%msvc-2015.cmake
 echo Using CMake cache files '%COMMON_CACHE_FILE%' '%WINDOWS_CACHE_FILE%'
 cmake --version
 
-set SIGNAL_NAME=vtkArrayDispatch_extra_arrays=vtkMDHWSignalArray^<double^>
-echo %SIGNAL_NAME%
-set SIGNAL_HEADER=vtkArrayDispatch_extra_headers=%SCRIPT_DIR%/vtkMDHWSignalArray/vtkMDHWSignalArray.h
-echo %SIGNAL_HEADER%
+set SIGNALNAME=vtkArrayDispatch_extra_arrays=vtkMDHWSignalArray^^^<double^^^>
+echo SIGNALNAME %SIGNALNAME%
+set SIGNALHEADER=vtkArrayDispatch_extra_headers=%SCRIPT_DIR%vtkMDHWSignalArray\vtkMDHWSignalArray.h
+echo SIGNALHEADER %SIGNALHEADER%
 ::Configure
-cmake -G "%CMAKE_GENERATOR%" -D%SIGNAL_NAME% -D%SIGNAL_HEADER% -C%COMMON_CACHE_FILE% -C%WINDOWS_CACHE_FILE% %SRC_DIR%\%PARAVIEW_SRC%
+cmake -G "%CMAKE_GENERATOR%" -D%SIGNALNAME% -D%SIGNALHEADER% -C%COMMON_CACHE_FILE% -C%WINDOWS_CACHE_FILE% %SRC_DIR%\%PARAVIEW_SRC%
 if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 
 ::Build
