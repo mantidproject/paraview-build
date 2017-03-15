@@ -155,6 +155,8 @@ if EXIST %SRC_DIR%\%PARAVIEW_SRC% (
   :: remove any changes from previous patches
   call "%GitCmd%" reset --hard
   call "%GitCmd%" submodule foreach git reset --hard
+  call "%GitCmd%" clean -xf
+  call "%GitCmd%" submodule foreach git clean -xf
 ) else (
   call "%GitCmd%" clone %PV_GIT_URL% %PARAVIEW_SRC%
   cd %PARAVIEW_SRC%

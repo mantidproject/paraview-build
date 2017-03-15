@@ -73,6 +73,8 @@ git submodule update --init --recursive
 #remove any changes from previous patches
 git reset --hard
 git submodule foreach git reset --hard
+git clean -xf
+git submodule foreach git clean -xf
 git config user.name "Bob T. Builder"
 git config user.email "builder@ornl.gov"
 git apply ${SCRIPT_DIR}/patches/1211.diff
