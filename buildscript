@@ -77,10 +77,12 @@ git config user.name "Bob T. Builder"
 git config user.email "builder@ornl.gov"
 git apply ${SCRIPT_DIR}/patches/1211.diff
 git apply ${SCRIPT_DIR}/patches/1382.diff
+git apply ${SCRIPT_DIR}/patches/1406.diff
 cd VTK
 git config user.name "Bob T. Builder"
 git config user.email "builder@ornl.gov"
 git apply ${SCRIPT_DIR}/patches/2527.diff
+git cherry-pick c006b84315b7913c7ad4fbefd35b769c4ca4785d
 
 # Go to build area, setup and run
 cd ${BUILD_DIR}
@@ -112,13 +114,15 @@ else
   SCL_ON_RHEL6="eval"
 fi
 
+SIGNAL_ARRAY="-DvtkArrayDispatch_extra_headers=\"vtkMDHWSignalArray<double>\" -DvtkArrayDispatch_extra_arrays=\"${SCRIPT_DIR}/vtkMDHWSignalArray/vtkMDHWSignalArray.h\""
+
 if [[ "${ON_OSX}" == true ]]; then
   $SCL_ON_RHEL6 "cmake -C${COMMON_CACHE_FILE} -C${OSX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
 else
     if [[ "${PY3}" == true ]]; then
-	$SCL_ON_RHEL6 "cmake -C${COMMON_CACHE_FILE} -C${LINUX_CACHE_FILE} -C${PYTHON3_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
+	$SCL_ON_RHEL6 "cmake ${SIGNAL_ARRAY} -C${COMMON_CACHE_FILE} -C${LINUX_CACHE_FILE} -C${PYTHON3_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
     else
-	$SCL_ON_RHEL6 "cmake -C${COMMON_CACHE_FILE} -C${LINUX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
+	$SCL_ON_RHEL6 "cmake ${SIGNAL_ARRAY} -C${COMMON_CACHE_FILE} -C${LINUX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
     fi
 fi
 

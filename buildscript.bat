@@ -21,7 +21,7 @@ set MANTID_THIRD_PARTY=%1
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Set the ParaView version to build
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-set PV_VERSION=v5.3.0-RC2
+set PV_VERSION=v5.3.0
 set PV_VERSION3=%PV_VERSION:v=%
 echo Building ParaView %PV_VERSION%
 
@@ -79,10 +79,13 @@ cd %SRC_DIR%\%PARAVIEW_SRC%
 "%GitCmd%" config user.email "builder@ornl.gov"
 "%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\1211.diff
 "%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\1382.diff
+"%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\1406.diff
 cd %SRC_DIR%\%PARAVIEW_SRC%\VTK
 "%GitCmd%" config user.name "Bob T. Builder"
 "%GitCmd%" config user.email "builder@ornl.gov"
 if ERRORLEVEL 1 exit /B %ERRORLEVEL%
+"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2527.diff
+"%GitCmd%" cherry-pick c006b84315b7913c7ad4fbefd35b769c4ca4785d
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Build ParaView
@@ -110,8 +113,10 @@ set WINDOWS_CACHE_FILE=%SCRIPT_DIR%msvc-2015.cmake
 echo Using CMake cache files '%COMMON_CACHE_FILE%' '%WINDOWS_CACHE_FILE%'
 cmake --version
 
+set SIGNAL_ARRAY=-DvtkArrayDispatch_extra_headers="vtkMDHWSignalArray<double>" -DvtkArrayDispatch_extra_arrays="%SCRIPT_DIR%/vtkMDHWSignalArray/vtkMDHWSignalArray.h"
+
 ::Configure
-cmake -G "%CMAKE_GENERATOR%" -C%COMMON_CACHE_FILE% -C%WINDOWS_CACHE_FILE% %SRC_DIR%\%PARAVIEW_SRC%
+cmake -G "%CMAKE_GENERATOR%" %SIGNAL_ARRAY% -C%COMMON_CACHE_FILE% -C%WINDOWS_CACHE_FILE% %SRC_DIR%\%PARAVIEW_SRC%
 if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 
 ::Build
