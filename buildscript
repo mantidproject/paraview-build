@@ -114,7 +114,7 @@ else
   SCL_ON_RHEL6="eval"
 fi
 
-SIGNAL_ARRAY="-DvtkArrayDispatch_extra_headers=\"vtkMDHWSignalArray<double>\" -DvtkArrayDispatch_extra_arrays=\"${SCRIPT_DIR}/vtkMDHWSignalArray/vtkMDHWSignalArray.h\""
+SIGNAL_ARRAY="-DvtkArrayDispatch_extra_arrays=\"vtkMDHWSignalArray<double>\" -DvtkArrayDispatch_extra_headers=\"${SCRIPT_DIR}/vtkMDHWSignalArray/vtkMDHWSignalArray.h\""
 
 if [[ "${ON_OSX}" == true ]]; then
   $SCL_ON_RHEL6 "cmake -C${COMMON_CACHE_FILE} -C${OSX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
