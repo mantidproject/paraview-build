@@ -124,7 +124,7 @@ ValueTypeT vtkMDHWSignalArray<ValueTypeT>::GetValue(vtkIdType idx) const {
     return m_signal[pos] / m_numEvents[pos];
   }
   // Should not reach here
-  std::numeric_limits<ValueTypeT>::quiet_NaN();
+  return std::numeric_limits<ValueTypeT>::quiet_NaN();
 }
 
 //------------------------------------------------------------------------------
