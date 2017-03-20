@@ -113,7 +113,7 @@ PYTHON3_CACHE_FILE=${SCRIPT_DIR}/python3.cmake
 [[ -d vtkMDHWSignalArray ]] || mkdir vtkMDHWSignalArray
 cp ${SCRIPT_DIR}/vtkMDHWSignalArray/vtkMDHWSignalArray.h vtkMDHWSignalArray
 SIGNAL_NAME=vtkArrayDispatch_extra_arrays=vtkMDHWSignalArray\\\<double\\\>
-SIGNAL_HEADER=vtkArrayDispatch_extra_headers=${PARAVIEW_BUILD}/vtkMDHWSignalArray/vtkMDHWSignalArray.h
+SIGNAL_HEADER=vtkArrayDispatch_extra_headers=${BUILD_DIR}/${PARAVIEW_BUILD}/vtkMDHWSignalArray/vtkMDHWSignalArray.h
 
 if [[ ${NODE_LABELS} == *rhel6* ]]; then
   SCL_ON_RHEL6="scl enable mantidlibs34 devtoolset-2"
