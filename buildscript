@@ -110,14 +110,16 @@ OSX_CACHE_FILE=${SCRIPT_DIR}/osx.cmake
 LINUX_CACHE_FILE=${SCRIPT_DIR}/linux.cmake
 PYTHON3_CACHE_FILE=${SCRIPT_DIR}/python3.cmake
 
+[[ -d vtkMDHWSignalArray ]] || mkdir vtkMDHWSignalArray
+cp ${SCRIPT_DIR}/vtkMDHWSignalArray/vtkMDHWSignalArray.h vtkMDHWSignalArray
+SIGNAL_NAME=vtkArrayDispatch_extra_arrays=vtkMDHWSignalArray\\\<double\\\>
+SIGNAL_HEADER=vtkArrayDispatch_extra_headers=${PARAVIEW_BUILD}/vtkMDHWSignalArray/vtkMDHWSignalArray.h
+
 if [[ ${NODE_LABELS} == *rhel6* ]]; then
   SCL_ON_RHEL6="scl enable mantidlibs34 devtoolset-2"
 else
   SCL_ON_RHEL6="eval"
 fi
-
-SIGNAL_NAME=vtkArrayDispatch_extra_arrays=vtkMDHWSignalArray\\\<double\\\>
-SIGNAL_HEADER=vtkArrayDispatch_extra_headers=${SCRIPT_DIR}/vtkMDHWSignalArray/vtkMDHWSignalArray.h
 
 if [[ "${ON_OSX}" == true ]]; then
   $SCL_ON_RHEL6 "cmake -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${OSX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
