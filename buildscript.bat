@@ -86,6 +86,8 @@ cd %SRC_DIR%\%PARAVIEW_SRC%\VTK
 if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2527.diff
 "%GitCmd%" cherry-pick c006b84315b7913c7ad4fbefd35b769c4ca4785d
+"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2632.diff
+"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2693.diff
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Build ParaView

@@ -1,0 +1,746 @@
+diff --git a/Common/DataModel/vtkRectilinearGrid.cxx b/Common/DataModel/vtkRectilinearGrid.cxx
+index 5316a62..da83d13 100644
+--- a/Common/DataModel/vtkRectilinearGrid.cxx
++++ b/Common/DataModel/vtkRectilinearGrid.cxx
+@@ -247,10 +247,11 @@ vtkCell *vtkRectilinearGrid::GetCell(int iMin, int jMin, int kMin) {
+   vtkIdType idx, npts;
+   int loc[3];
+   int iMax, jMax, kMax;
++  this->GetDimensions();
+   int d01 = this->Dimensions[0] * this->Dimensions[1];
+   double x[3];
+ 
+-  iMin = iMax = jMin = jMax = kMin = kMax = 0;
++  iMax = jMax = kMax = 0;
+ 
+   switch (this->DataDescription) {
+   case VTK_EMPTY:
+diff --git a/Common/DataModel/vtkStructuredGrid.cxx b/Common/DataModel/vtkStructuredGrid.cxx
+index 703265b..d82eb91 100644
+--- a/Common/DataModel/vtkStructuredGrid.cxx
++++ b/Common/DataModel/vtkStructuredGrid.cxx
+@@ -33,6 +33,8 @@ vtkStandardNewMacro(vtkStructuredGrid);
+ unsigned char vtkStructuredGrid::MASKED_CELL_VALUE =
+   vtkDataSetAttributes::HIDDENCELL | vtkDataSetAttributes::REFINEDCELL;
+ 
++unsigned char vtkStructuredGrid::MASKED_POINT_VALUE = vtkDataSetAttributes::HIDDENPOINT;
++
+ #define vtkAdjustBoundsMacro( A, B ) \
+   A[0] = (B[0] < A[0] ? B[0] : A[0]);   A[1] = (B[0] > A[1] ? B[0] : A[1]); \
+   A[2] = (B[1] < A[2] ? B[1] : A[2]);   A[3] = (B[1] > A[3] ? B[1] : A[3]); \
+@@ -56,6 +58,11 @@ vtkStructuredGrid::vtkStructuredGrid()
+ 
+   this->Information->Set(vtkDataObject::DATA_EXTENT_TYPE(), VTK_3D_EXTENT);
+   this->Information->Set(vtkDataObject::DATA_EXTENT(), this->Extent, 6);
++
++  PointGhostArrayPtr = nullptr;
++  CellGhostArrayPtr = nullptr;
++  PointGhostArrayPtrCached = false;
++  CellGhostArrayPtrCached = false;
+ }
+ 
+ //----------------------------------------------------------------------------
+@@ -274,8 +281,6 @@ vtkCell *vtkStructuredGrid::GetCell(vtkIdType cellId)
+ 
+ //----------------------------------------------------------------------------
+ vtkCell *vtkStructuredGrid::GetCell(int i, int j, int k) {
+-  vtkIdType cellId =
+-      i + (j + (k * (this->Dimensions[1] - 1))) * (this->Dimensions[0] - 1);
+   vtkCell *cell = NULL;
+   vtkIdType idx;
+   int d01, offset1, offset2;
+@@ -287,15 +292,16 @@ vtkCell *vtkStructuredGrid::GetCell(int i, int j, int k) {
+     return NULL;
+   }
+ 
++  // Update dimensions
++  this->GetDimensions();
++  vtkIdType cellId = i + (j + (k * (this->Dimensions[1] - 1))) * (this->Dimensions[0] - 1);
++
+   // see whether the cell is blanked
+   if (!this->IsCellVisible(cellId))
+   {
+     return this->EmptyCell;
+   }
+ 
+-  // Update dimensions
+-  this->GetDimensions();
+-
+   switch (this->DataDescription)
+   {
+   case VTK_EMPTY:
+@@ -706,17 +712,6 @@ void vtkStructuredGrid::UnBlankCell(vtkIdType cellId)
+ }
+ 
+ //----------------------------------------------------------------------------
+-unsigned char vtkStructuredGrid::IsPointVisible(vtkIdType pointId)
+-{
+-  vtkUnsignedCharArray* ghosts = this->GetPointGhostArray();
+-  if(ghosts && (ghosts->GetValue(pointId) & vtkDataSetAttributes::HIDDENPOINT))
+-  {
+-    return 0;
+-  }
+-  return 1;
+-}
+-
+-//----------------------------------------------------------------------------
+ void vtkStructuredGrid::GetCellDims( int cellDims[3] )
+ {
+   for( int i=0; i < 3; ++i )
+@@ -727,19 +722,8 @@ void vtkStructuredGrid::GetCellDims( int cellDims[3] )
+ 
+ //----------------------------------------------------------------------------
+ // Return non-zero if the specified cell is visible (i.e., not blanked)
+-unsigned char vtkStructuredGrid::IsCellVisible(vtkIdType cellId)
++unsigned char vtkStructuredGrid::CellVisibleUsingPGA(vtkIdType cellId)
+ {
+-  vtkUnsignedCharArray* ghosts = this->GetCellGhostArray();
+-  if(ghosts && (ghosts->GetValue(cellId) & MASKED_CELL_VALUE))
+-  {
+-    return 0;
+-  }
+-
+-  if (! this->GetPointGhostArray())
+-  {
+-    return (this->DataDescription == VTK_EMPTY) ? 0 : 1;
+-  }
+-
+   // Update dimensions
+   this->GetDimensions();
+ 
+@@ -1409,3 +1393,17 @@ bool vtkStructuredGrid::HasAnyBlankCells()
+                                  vtkDataSetAttributes::HIDDENCELL);
+   return cellBlanking || this->HasAnyBlankPoints();
+ }
++
++void vtkStructuredGrid::UpdateCellGhostArrayPtrCache()
++{
++  vtkUnsignedCharArray * cga = this->GetCellGhostArray();
++  this->CellGhostArrayPtr = cga ? cga->GetPointer(0): nullptr;
++  this->CellGhostArrayPtrCached = true;
++}
++
++void vtkStructuredGrid::UpdatePointGhostArrayPtrCache()
++{
++  vtkUnsignedCharArray * pga = this->GetPointGhostArray();
++  this->PointGhostArrayPtr = pga ? pga->GetPointer(0): nullptr;
++  this->PointGhostArrayPtrCached = true;
++}
+diff --git a/Common/DataModel/vtkStructuredGrid.h b/Common/DataModel/vtkStructuredGrid.h
+index fbc688d..da93265 100644
+--- a/Common/DataModel/vtkStructuredGrid.h
++++ b/Common/DataModel/vtkStructuredGrid.h
+@@ -258,6 +258,7 @@ protected:
+    * only if the cache became invalid (ScalarRangeComputeTime).
+    */
+   void ComputeScalarRange() VTK_OVERRIDE;
++  unsigned char CellVisibleUsingPGA(vtkIdType cellId);
+ 
+ private:
+   /**
+@@ -270,6 +271,16 @@ private:
+   void InternalStructuredGridCopy(vtkStructuredGrid *src);
+ 
+   static unsigned char MASKED_CELL_VALUE;
++  static unsigned char MASKED_POINT_VALUE;
++
++  void UpdateCellGhostArrayPtrCache();
++  void UpdatePointGhostArrayPtrCache();
++  unsigned char *GetCellGhostArrayPtr();
++  unsigned char *GetPointGhostArrayPtr();
++  unsigned char *PointGhostArrayPtr, *CellGhostArrayPtr;
++  bool PointGhostArrayPtrCached, CellGhostArrayPtrCached;
++
++
+ 
+ private:
+   vtkStructuredGrid(const vtkStructuredGrid&) VTK_DELETE_FUNCTION;
+@@ -304,6 +315,51 @@ inline int vtkStructuredGrid::GetDataDimension()
+   return vtkStructuredData::GetDataDimension(this->DataDescription);
+ }
+ 
++inline unsigned char *vtkStructuredGrid::GetCellGhostArrayPtr()
++{
++  if(!this->CellGhostArrayPtrCached)
++  {
++    this->UpdateCellGhostArrayPtrCache();
++  }
++  return this->CellGhostArrayPtr;
++}
++
++inline unsigned char *vtkStructuredGrid::GetPointGhostArrayPtr()
++{
++  if(!this->PointGhostArrayPtrCached)
++  {
++    this->UpdatePointGhostArrayPtrCache();
++  }
++  return this->PointGhostArrayPtr;
++}
++
++//----------------------------------------------------------------------------
++// Return non-zero if the specified cell is visible (i.e., not blanked)
++inline unsigned char vtkStructuredGrid::IsCellVisible(vtkIdType cellId)
++{
++  unsigned char* ghosts = this->GetCellGhostArrayPtr();
++  if(ghosts && (ghosts[cellId] & MASKED_CELL_VALUE))
++  {
++    return 0;
++  }
++  if (!this->GetPointGhostArrayPtr())
++  {
++    return (this->DataDescription == VTK_EMPTY) ? 0 : 1;
++  }
++  return this->CellVisibleUsingPGA(cellId);
++}
++
++//----------------------------------------------------------------------------
++inline unsigned char vtkStructuredGrid::IsPointVisible(vtkIdType pointId)
++{
++  unsigned char* ghosts = this->GetPointGhostArrayPtr();
++  if(ghosts && (ghosts[pointId] & MASKED_POINT_VALUE))
++  {
++    return 0;
++  }
++  return 1;
++}
++
+ #endif
+ 
+ 
+diff --git a/Common/DataModel/vtkUniformGrid.cxx b/Common/DataModel/vtkUniformGrid.cxx
+index 1a483c4..6b49b2b 100644
+--- a/Common/DataModel/vtkUniformGrid.cxx
++++ b/Common/DataModel/vtkUniformGrid.cxx
+@@ -316,7 +316,6 @@ vtkCell *vtkUniformGrid::GetCell(vtkIdType cellId)
+ //----------------------------------------------------------------------------
+ vtkCell *vtkUniformGrid::GetCell(int iMin, int jMin, int kMin)
+ {
+-  vtkIdType cellId = iMin + (jMin + (kMin * (this->Dimensions[1] - 1))) * (this->Dimensions[0] - 1);
+   vtkCell *cell = NULL;
+   int loc[3];
+   vtkIdType idx, npts;
+@@ -339,6 +338,7 @@ vtkCell *vtkUniformGrid::GetCell(int iMin, int jMin, int kMin)
+     return this->GetEmptyCell();
+   }
+ 
++  vtkIdType cellId = iMin + (jMin + (kMin * (dims[1] - 1))) * (dims[0] - 1);
+   // see whether the cell is blanked
+   if (!this->IsCellVisible(cellId) )
+   {
+diff --git a/Filters/Core/vtkThreshold.cxx b/Filters/Core/vtkThreshold.cxx
+index 5df337c..b5c5052 100644
+--- a/Filters/Core/vtkThreshold.cxx
++++ b/Filters/Core/vtkThreshold.cxx
+@@ -17,10 +17,14 @@
+ #include "vtkCell.h"
+ #include "vtkCellData.h"
+ #include "vtkIdList.h"
++#include "vtkImageData.h"
+ #include "vtkInformation.h"
+ #include "vtkInformationVector.h"
++#include "vtkNew.h"
+ #include "vtkObjectFactory.h"
+ #include "vtkPointData.h"
++#include "vtkRectilinearGrid.h"
++#include "vtkStructuredGrid.h"
+ #include "vtkUnstructuredGrid.h"
+ #include "vtkStreamingDemandDrivenPipeline.h"
+ #include "vtkMath.h"
+@@ -105,18 +109,6 @@ int vtkThreshold::RequestData(
+   vtkUnstructuredGrid *output = vtkUnstructuredGrid::SafeDownCast(
+     outInfo->Get(vtkDataObject::DATA_OBJECT()));
+ 
+-  vtkIdType cellId, newCellId;
+-  vtkIdList *cellPts, *pointMap;
+-  vtkIdList *newCellPts;
+-  vtkCell *cell;
+-  vtkPoints *newPoints;
+-  int i, ptId, newId, numPts;
+-  int numCellPts;
+-  double x[3];
+-  vtkPointData *pd=input->GetPointData(), *outPD=output->GetPointData();
+-  vtkCellData *cd=input->GetCellData(), *outCD=output->GetCellData();
+-  int keepCell;
+-
+   vtkDebugMacro(<< "Executing threshold filter");
+ 
+   if (this->AttributeMode != -1)
+@@ -133,18 +125,66 @@ int vtkThreshold::RequestData(
+     return 1;
+   }
+ 
+-  outPD->CopyGlobalIdsOn();
+-  outPD->CopyAllocate(pd);
+-  outCD->CopyGlobalIdsOn();
+-  outCD->CopyAllocate(cd);
++  // are we using pointScalars?
++  int fieldAssociation = this->GetInputArrayAssociation(0, inputVector);
++  bool usePointScalars = fieldAssociation == vtkDataObject::FIELD_ASSOCIATION_POINTS;
+ 
+-  numPts = input->GetNumberOfPoints();
+-  output->Allocate(input->GetNumberOfCells());
++  switch (input->GetDataObjectType())
++  {
++    case VTK_RECTILINEAR_GRID:
++    {
++      vtkRectilinearGrid *grid = vtkRectilinearGrid::SafeDownCast(input);
++      int dims[3];
++      grid->GetDimensions(dims);
++      for (int i = 0; i < 3; ++i)
++      {
++        dims[i] = std::max(dims[i] - 1, 1);
++      }
++      this->StructuredExecute(input, inScalars, output, dims, usePointScalars);
++      break;
++    }
++    case VTK_STRUCTURED_GRID:
++    {
++      vtkStructuredGrid *grid = vtkStructuredGrid::SafeDownCast(input);
++      int dims[3];
++      grid->GetCellDims(dims);
++      this->StructuredExecute(input, inScalars, output, dims, usePointScalars);
++      break;
++    }
++    case VTK_UNIFORM_GRID:
++    case VTK_STRUCTURED_POINTS:
++    case VTK_IMAGE_DATA:
++    {
++      vtkImageData *image = vtkImageData::SafeDownCast(input);
++      int dims[3];
++      image->GetDimensions(dims);
++      for (int i = 0; i < 3; ++i)
++      {
++        dims[i] = std::max(dims[i] - 1, 1);
++      }
++      this->StructuredExecute(image,inScalars, output, dims, usePointScalars);
++      break;
++    }
++    default:
++    {
++      this->DataSetExecute(input, inScalars, output, usePointScalars);
++      break;
++    }
++  }
+ 
+-  newPoints = vtkPoints::New();
++  vtkDebugMacro(<< "Extracted " << output->GetNumberOfCells()
++                << " number of cells.");
+ 
++  output->Squeeze();
++  return 1;
++}
++
++namespace {
++// set precision for the points in the output
++void SetDataType(vtkDataSet *input, vtkPoints *newPoints, int OutputPointsPrecision)
++{
+   // set precision for the points in the output
+-  if(this->OutputPointsPrecision == vtkAlgorithm::DEFAULT_PRECISION)
++  if(OutputPointsPrecision == vtkAlgorithm::DEFAULT_PRECISION)
+   {
+     vtkPointSet *inputPointSet = vtkPointSet::SafeDownCast(input);
+     if(inputPointSet && inputPointSet->GetPoints())
+@@ -156,57 +196,77 @@ int vtkThreshold::RequestData(
+       newPoints->SetDataType(VTK_FLOAT);
+     }
+   }
+-  else if(this->OutputPointsPrecision == vtkAlgorithm::SINGLE_PRECISION)
++  else if(OutputPointsPrecision == vtkAlgorithm::SINGLE_PRECISION)
+   {
+     newPoints->SetDataType(VTK_FLOAT);
+   }
+-  else if(this->OutputPointsPrecision == vtkAlgorithm::DOUBLE_PRECISION)
++  else if(OutputPointsPrecision == vtkAlgorithm::DOUBLE_PRECISION)
+   {
+     newPoints->SetDataType(VTK_DOUBLE);
+   }
++}
++}
+ 
++void vtkThreshold::DataSetExecute(vtkDataSet *input, vtkDataArray *inScalars, vtkUnstructuredGrid *output, bool usePointScalars)
++{
++  vtkPointData *pd=input->GetPointData(), *outPD=output->GetPointData();
++  vtkCellData *cd=input->GetCellData(), *outCD=output->GetCellData();
++
++  outPD->CopyGlobalIdsOn();
++  outPD->CopyAllocate(pd);
++  outCD->CopyGlobalIdsOn();
++  outCD->CopyAllocate(cd);
++
++  vtkIdType numPts = input->GetNumberOfPoints();
++  output->Allocate(input->GetNumberOfCells());
++
++  vtkNew<vtkPoints> newPoints;
++  SetDataType(input, newPoints.Get(), this->OutputPointsPrecision);
+   newPoints->Allocate(numPts);
+ 
+-  pointMap = vtkIdList::New(); //maps old point ids into new
++  vtkNew<vtkIdList> pointMap; //maps old point ids into new
+   pointMap->SetNumberOfIds(numPts);
+-  for (i=0; i < numPts; i++)
++  for (int i = 0; i < numPts; ++i)
+   {
+     pointMap->SetId(i,-1);
+   }
+ 
+-  newCellPts = vtkIdList::New();
+-
+-  // are we using pointScalars?
+-  int fieldAssociation = this->GetInputArrayAssociation(0, inputVector);
+-  bool usePointScalars = fieldAssociation == vtkDataObject::FIELD_ASSOCIATION_POINTS;
+-
++  vtkNew<vtkIdList> newCellPts;
++  int abort = 0;
++  vtkIdType numCells = input->GetNumberOfCells();
++  vtkIdType updateInverval = std::max(numCells/100, vtkIdType{1});
+   // Check that the scalars of each cell satisfy the threshold criterion
+-  for (cellId=0; cellId < input->GetNumberOfCells(); cellId++)
++  for (vtkIdType cellId = 0; cellId < numCells && !abort; ++cellId)
+   {
+-    cell = input->GetCell(cellId);
+-    cellPts = cell->GetPointIds();
+-    numCellPts = cell->GetNumberOfPoints();
+-
++    if(cellId % updateInverval == 0)
++    {
++      this->UpdateProgress(static_cast<double>(cellId) / numCells);
++      abort = this->GetAbortExecute();
++    }
++    bool keepCell = true;
++    vtkCell *cell = input->GetCell(cellId);
++    vtkIdList *cellPts = cell->GetPointIds();
++    vtkIdType numCellPts = cell->GetNumberOfPoints();
+     if ( usePointScalars )
+     {
+       if (this->AllScalars)
+       {
+         keepCell = 1;
+-        for ( i=0; keepCell && (i < numCellPts); i++)
++        for (vtkIdType i = 0; keepCell && (i < numCellPts); ++i)
+         {
+-          ptId = cellPts->GetId(i);
+-          keepCell = this->EvaluateComponents( inScalars, ptId );
++          vtkIdType ptId = cellPts->GetId(i);
++          keepCell = this->EvaluateComponents(inScalars, ptId);
+         }
+       }
+       else
+       {
+         if(!this->UseContinuousCellRange)
+         {
+-          keepCell = 0;
+-          for ( i=0; (!keepCell) && (i < numCellPts); i++)
++          keepCell = false;
++          for (vtkIdType i = 0; (!keepCell) && (i < numCellPts); ++i)
+           {
+-            ptId = cellPts->GetId(i);
+-            keepCell = this->EvaluateComponents( inScalars, ptId );
++            vtkIdType ptId = cellPts->GetId(i);
++            keepCell = this->EvaluateComponents(inScalars, ptId);
+           }
+         }
+         else
+@@ -217,23 +277,26 @@ int vtkThreshold::RequestData(
+     }
+     else //use cell scalars
+     {
+-      keepCell = this->EvaluateComponents( inScalars, cellId );
++      keepCell = this->EvaluateComponents(inScalars, cellId);
+     }
+ 
+-    if (  numCellPts > 0 && keepCell )
++    if (numCellPts > 0 && keepCell)
+     {
++      newCellPts->SetNumberOfIds(numCellPts);
+       // satisfied thresholding (also non-empty cell, i.e. not VTK_EMPTY_CELL)
+-      for (i=0; i < numCellPts; i++)
++      for (vtkIdType i = 0; i < numCellPts; ++i)
+       {
+-        ptId = cellPts->GetId(i);
+-        if ( (newId = pointMap->GetId(ptId)) < 0 )
++        vtkIdType ptId = cellPts->GetId(i);
++        vtkIdType newId = pointMap->GetId(ptId);
++        if (newId < 0)
+         {
++          double x[3];
+           input->GetPoint(ptId, x);
+           newId = newPoints->InsertNextPoint(x);
+-          pointMap->SetId(ptId,newId);
+-          outPD->CopyData(pd,ptId,newId);
++          pointMap->SetId(ptId, newId);
++          outPD->CopyData(pd, ptId, newId);
+         }
+-        newCellPts->InsertId(i,newId);
++        newCellPts->SetId(i, newId);
+       }
+       // special handling for polyhedron cells
+       if (vtkUnstructuredGrid::SafeDownCast(input) &&
+@@ -241,91 +304,186 @@ int vtkThreshold::RequestData(
+       {
+         newCellPts->Reset();
+         vtkUnstructuredGrid::SafeDownCast(input)->
+-          GetFaceStream(cellId, newCellPts);
++          GetFaceStream(cellId, newCellPts.Get());
+         vtkUnstructuredGrid::ConvertFaceStreamPointIds(
+-          newCellPts, pointMap->GetPointer(0));
++          newCellPts.Get(), pointMap->GetPointer(0));
+       }
+-      newCellId = output->InsertNextCell(cell->GetCellType(),newCellPts);
+-      outCD->CopyData(cd,cellId,newCellId);
+-      newCellPts->Reset();
++      vtkIdType newCellId = output->InsertNextCell(cell->GetCellType(), newCellPts.Get());
++      outCD->CopyData(cd, cellId, newCellId);
+     } // satisfied thresholding
+   } // for all cells
++  output->SetPoints(newPoints.Get());
++}
+ 
+-  vtkDebugMacro(<< "Extracted " << output->GetNumberOfCells()
+-                << " number of cells.");
++void vtkThreshold::StructuredExecute(vtkDataSet *input, vtkDataArray *inScalars, vtkUnstructuredGrid *output, int dims[3], bool usePointScalars)
++{
++  vtkPointData *pd=input->GetPointData(), *outPD=output->GetPointData();
++  vtkCellData *cd=input->GetCellData(), *outCD=output->GetCellData();
+ 
+-  // now clean up / update ourselves
+-  pointMap->Delete();
+-  newCellPts->Delete();
++  vtkDebugMacro(<< "Executing threshold filter");
+ 
+-  output->SetPoints(newPoints);
+-  newPoints->Delete();
++  outPD->CopyGlobalIdsOn();
++  outPD->CopyAllocate(pd);
++  outCD->CopyGlobalIdsOn();
++  outCD->CopyAllocate(cd);
+ 
+-  output->Squeeze();
++  vtkIdType numPts = input->GetNumberOfPoints();
++  output->Allocate(input->GetNumberOfCells());
+ 
+-  return 1;
++  vtkNew<vtkPoints> newPoints;
++  SetDataType(input, newPoints.Get(), this->OutputPointsPrecision);
++  newPoints->Allocate(numPts);
++
++  vtkNew<vtkIdList> pointMap; //maps old point ids into new
++  pointMap->SetNumberOfIds(numPts);
++  for (int i = 0; i < numPts; ++i)
++  {
++    pointMap->SetId(i, -1);
++  }
++
++  vtkNew<vtkIdList> newCellPts;
++
++  // Check that the scalars of each cell satisfy the threshold criterion
++  int abort = 0;
++  vtkIdType d01 = static_cast<vtkIdType>(dims[0]) * dims[1];
++  // Check that the scalars of each cell satisfy the threshold criterion
++  for (int k = 0; k < dims[2] && !abort; ++k)
++  {
++    this->UpdateProgress(static_cast<double>(k) / dims[2]);
++    abort = this->GetAbortExecute();
++    for (int j = 0; j < dims[1]; ++j)
++    {
++      for (int i = 0; i < dims[0]; ++i)
++      {
++        vtkIdType cellId = d01 * k + dims[0] * j + i;
++        bool keepCell = true;
++        vtkCell *cell = input->GetCell(i, j, k);
++        vtkIdList *cellPts = cell->GetPointIds();
++        vtkIdType numCellPts = cell->GetNumberOfPoints();
++        if (numCellPts == 0)
++        {
++          keepCell = false;
++        }
++        else if (usePointScalars)
++        {
++          if (this->AllScalars)
++          {
++            keepCell = true;
++            for (vtkIdType i = 0; keepCell && (i < numCellPts); ++i)
++            {
++              vtkIdType ptId = cellPts->GetId(i);
++              keepCell = this->EvaluateComponents(inScalars, ptId);
++            }
++          }
++          else
++          {
++            if(!this->UseContinuousCellRange)
++            {
++              keepCell = false;
++              for (vtkIdType i = 0; (!keepCell) && (i < numCellPts); ++i)
++              {
++                vtkIdType ptId = cellPts->GetId(i);
++                keepCell = this->EvaluateComponents( inScalars, ptId );
++              }
++            }
++            else
++            {
++              keepCell = this->EvaluateCell(inScalars, cellPts, numCellPts);
++            }
++          }
++        }
++        else //use cell scalars
++        {
++          keepCell = this->EvaluateComponents(inScalars, cellId);
++        }
++        if (keepCell)
++        {
++          newCellPts->SetNumberOfIds(numCellPts);
++          // satisfied thresholding (also non-empty cell, i.e. not VTK_EMPTY_CELL)
++          for (vtkIdType i = 0; i < numCellPts; ++i)
++          {
++            vtkIdType ptId = cellPts->GetId(i);
++            vtkIdType newId = pointMap->GetId(ptId);
++            if (newId < 0)
++            {
++              double x[3];
++              input->GetPoint(ptId, x);
++              newId = newPoints->InsertNextPoint(x);
++              pointMap->SetId(ptId, newId);
++              outPD->CopyData(pd, ptId, newId);
++            }
++            newCellPts->SetId(i, newId);
++          }
++          vtkIdType newCellId = output->InsertNextCell(cell->GetCellType(), newCellPts.Get());
++          outCD->CopyData(cd, cellId, newCellId);
++        } // satisfied thresholding
++      } // for all i
++    } // for all j
++  } // for all k
++  output->SetPoints(newPoints.Get());
+ }
+ 
+-int vtkThreshold::EvaluateCell( vtkDataArray *scalars,vtkIdList* cellPts, int numCellPts )
++
++bool vtkThreshold::EvaluateCell( vtkDataArray *scalars,vtkIdList* cellPts, int numCellPts )
+ {
+   int c(0);
+   int numComp = scalars->GetNumberOfComponents();
+-  int keepCell(0);
++  bool keepCell = false;
+   switch (this->ComponentMode)
+   {
+     case VTK_COMPONENT_MODE_USE_SELECTED:
+-      c  =   (this->SelectedComponent < numComp)?(this->SelectedComponent):(0);
++      c = (this->SelectedComponent < numComp) ? (this->SelectedComponent) : (0);
+       keepCell = EvaluateCell(scalars,c,cellPts,numCellPts);
+       break;
+     case VTK_COMPONENT_MODE_USE_ANY:
+-      keepCell = 0;
+-      for ( c = 0; (!keepCell) && (c < numComp); c++ )
++      keepCell = false;
++      for (c = 0; (!keepCell) && (c < numComp); ++c)
+       {
+-        keepCell =EvaluateCell(scalars,c,cellPts,numCellPts);
++        keepCell = EvaluateCell(scalars,c,cellPts,numCellPts);
+       }
+       break;
+     case VTK_COMPONENT_MODE_USE_ALL:
+-      keepCell = 1;
+-      for ( c = 0; keepCell && (c < numComp); c++ )
++      keepCell = true;
++      for (c = 0; keepCell && (c < numComp); ++c)
+       {
+-        keepCell =EvaluateCell(scalars,c,cellPts,numCellPts);
++        keepCell = EvaluateCell(scalars,c,cellPts,numCellPts);
+       }
+       break;
+   }
+   return keepCell;
+ }
+ 
+-int vtkThreshold::EvaluateCell( vtkDataArray *scalars, int c, vtkIdList* cellPts, int numCellPts )
++bool vtkThreshold::EvaluateCell( vtkDataArray *scalars, int c, vtkIdList* cellPts, int numCellPts )
+ {
+   double minScalar=DBL_MAX, maxScalar=DBL_MIN;
+-  for (int i=0; i < numCellPts; i++)
++  for (int i = 0; i < numCellPts; ++i)
+   {
+     int ptId = cellPts->GetId(i);
+-    double s = scalars->GetComponent(ptId,c);
+-    minScalar = std::min(s,minScalar);
+-    maxScalar = std::max(s,maxScalar);
++    double s = scalars->GetComponent(ptId, c);
++    minScalar = std::min(s, minScalar);
++    maxScalar = std::max(s, maxScalar);
+   }
+ 
+-  int keepCell =  !(this->LowerThreshold > maxScalar || this->UpperThreshold < minScalar);
++  bool keepCell = !(this->LowerThreshold > maxScalar || this->UpperThreshold < minScalar);
+   return keepCell;
+ }
+ 
+-int vtkThreshold::EvaluateComponents( vtkDataArray *scalars, vtkIdType id )
++bool vtkThreshold::EvaluateComponents( vtkDataArray *scalars, vtkIdType id )
+ {
+-  int keepCell = 0;
++  bool keepCell = false;
+   int numComp = scalars->GetNumberOfComponents();
+   int c;
+ 
+   switch ( this->ComponentMode )
+   {
+     case VTK_COMPONENT_MODE_USE_SELECTED:
+-      c = (this->SelectedComponent < numComp)?(this->SelectedComponent):(0);
++      c = (this->SelectedComponent < numComp) ? (this->SelectedComponent) : (0);
+       keepCell =
+         (this->*(this->ThresholdFunction))(scalars->GetComponent(id,c));
+       break;
+     case VTK_COMPONENT_MODE_USE_ANY:
+       keepCell = 0;
+-      for ( c = 0; (!keepCell) && (c < numComp); c++ )
++      for (c = 0; (!keepCell) && (c < numComp); ++c)
+       {
+         keepCell =
+           (this->*(this->ThresholdFunction))(scalars->GetComponent(id,c));
+@@ -333,7 +491,7 @@ int vtkThreshold::EvaluateComponents( vtkDataArray *scalars, vtkIdType id )
+       break;
+     case VTK_COMPONENT_MODE_USE_ALL:
+       keepCell = 1;
+-      for ( c = 0; keepCell && (c < numComp); c++ )
++      for (c = 0; keepCell && (c < numComp); ++c)
+       {
+         keepCell =
+           (this->*(this->ThresholdFunction))(scalars->GetComponent(id,c));
+@@ -347,11 +505,11 @@ int vtkThreshold::EvaluateComponents( vtkDataArray *scalars, vtkIdType id )
+ // Return the method for manipulating scalar data as a string.
+ const char *vtkThreshold::GetAttributeModeAsString(void)
+ {
+-  if ( this->AttributeMode == VTK_ATTRIBUTE_MODE_DEFAULT )
++  if (this->AttributeMode == VTK_ATTRIBUTE_MODE_DEFAULT)
+   {
+     return "Default";
+   }
+-  else if ( this->AttributeMode == VTK_ATTRIBUTE_MODE_USE_POINT_DATA )
++  else if (this->AttributeMode == VTK_ATTRIBUTE_MODE_USE_POINT_DATA)
+   {
+     return "UsePointData";
+   }
+diff --git a/Filters/Core/vtkThreshold.h b/Filters/Core/vtkThreshold.h
+index c72b7cd..4d77baf 100644
+--- a/Filters/Core/vtkThreshold.h
++++ b/Filters/Core/vtkThreshold.h
+@@ -192,6 +192,8 @@ protected:
+ 
+   int FillInputPortInformation(int port, vtkInformation *info) VTK_OVERRIDE;
+ 
++  void DataSetExecute(vtkDataSet *input, vtkDataArray *inScalars, vtkUnstructuredGrid *output, bool usePointScalars);
++  void StructuredExecute(vtkDataSet *input, vtkDataArray *inScalars, vtkUnstructuredGrid *output, int dims[3], bool usePointScalars);
+ 
+   int    AllScalars;
+   double LowerThreshold;
+@@ -209,9 +211,9 @@ protected:
+   int Between(double s) {return ( s >= this->LowerThreshold ?
+                                ( s <= this->UpperThreshold ? 1 : 0 ) : 0 );};
+ 
+-  int EvaluateComponents( vtkDataArray *scalars, vtkIdType id );
+-  int EvaluateCell( vtkDataArray *scalars, vtkIdList* cellPts, int numCellPts );
+-  int EvaluateCell( vtkDataArray *scalars, int c, vtkIdList* cellPts, int numCellPts );
++  bool EvaluateComponents( vtkDataArray *scalars, vtkIdType id );
++  bool EvaluateCell( vtkDataArray *scalars, vtkIdList* cellPts, int numCellPts );
++  bool EvaluateCell( vtkDataArray *scalars, int c, vtkIdList* cellPts, int numCellPts );
+ private:
+   vtkThreshold(const vtkThreshold&) VTK_DELETE_FUNCTION;
+   void operator=(const vtkThreshold&) VTK_DELETE_FUNCTION;

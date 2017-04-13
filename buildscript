@@ -90,6 +90,8 @@ git config user.name "Bob T. Builder"
 git config user.email "builder@ornl.gov"
 git apply ${SCRIPT_DIR}/patches/2527.diff
 git cherry-pick c006b84315b7913c7ad4fbefd35b769c4ca4785d
+git apply ${SCRIPT_DIR}/patches/2632.diff
+git apply ${SCRIPT_DIR}/patches/2693.diff
 
 # Go to build area, setup and run
 cd ${BUILD_DIR}
