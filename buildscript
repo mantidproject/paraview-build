@@ -72,9 +72,12 @@ git reset --hard
 git submodule foreach git reset --hard
 git pull --rebase origin master
 git submodule update --init --recursive
-#git config user.name "Bob T. Builder"
-#git config user.email "builder@ornl.gov"
-#cd VTK
+git config user.name "Bob T. Builder"
+git config user.email "builder@ornl.gov"
+cd VTK
+git config user.name "Bob T. Builder"
+git config user.email "builder@ornl.gov"
+git cherry-pick 5cd333b6113e56b5b8346f4f9f989e81c6a0117b
 
 # Go to build area, setup and run
 cd ${BUILD_DIR}
