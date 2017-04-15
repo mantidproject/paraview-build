@@ -90,6 +90,11 @@ COMMON_CACHE_FILE=${SCRIPT_DIR}/common.cmake
 OSX_CACHE_FILE=${SCRIPT_DIR}/osx.cmake
 LINUX_CACHE_FILE=${SCRIPT_DIR}/linux.cmake
 
+[[ -d vtkMDHWSignalArray ]] || mkdir vtkMDHWSignalArray
+cp ${SCRIPT_DIR}/vtkMDHWSignalArray/vtkMDHWSignalArray.h vtkMDHWSignalArray
+SIGNAL_NAME=vtkArrayDispatch_extra_arrays=vtkMDHWSignalArray\\\<double\\\>
+SIGNAL_HEADER=vtkArrayDispatch_extra_headers=${BUILD_DIR}/${PARAVIEW_BUILD}/vtkMDHWSignalArray/vtkMDHWSignalArray.h
+
 if [[ ${NODE_LABELS} == *rhel6* ]]; then
   SCL_ON_RHEL6="scl enable mantidlibs34 devtoolset-2"
 else
@@ -97,9 +102,9 @@ else
 fi
 
 if [[ "${ON_OSX}" == true ]]; then
-  $SCL_ON_RHEL6 "cmake -C${COMMON_CACHE_FILE} -C${OSX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
+  $SCL_ON_RHEL6 "cmake -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${OSX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
 else
-  $SCL_ON_RHEL6 "cmake -C${COMMON_CACHE_FILE} -C${LINUX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
+  $SCL_ON_RHEL6 "cmake -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${LINUX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
 fi
 
 $SCL_ON_RHEL6 "make -j ${BUILD_THREADS}"
