@@ -30,7 +30,7 @@ BUILDER=builder
 if [[ $(uname) == "Darwin" ]]; then
   ON_OSX=true
   HOME_DIR=/Users/${BUILDER}
-  OSX_VERSION=$(sw_vers -productVersion | head -n1 | awk '{print $3}')
+  OSX_VERSION=$(sw_vers -productVersion)
   echo "Using OS X version ${OSX_VERSION}"
   OSX_MAJOR_VERSION=$(echo $OSX_VERSION | cut -d. -f1)
   OSX_MINOR_VERSION=$(echo $OSX_VERSION | cut -d. -f2)
