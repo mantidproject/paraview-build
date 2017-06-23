@@ -21,7 +21,7 @@ set MANTID_THIRD_PARTY=%1
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Set the ParaView version to build
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-set PV_VERSION=v5.3.0
+set PV_VERSION=v5.4.0
 set PV_VERSION3=%PV_VERSION:v=%
 echo Building ParaView %PV_VERSION%
 
@@ -77,15 +77,12 @@ call:fetch-paraview
 cd %SRC_DIR%\%PARAVIEW_SRC%
 "%GitCmd%" config user.name "Bob T. Builder"
 "%GitCmd%" config user.email "builder@ornl.gov"
-"%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\1211.diff
-"%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\1382.diff
-"%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\1406.diff
+"%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\1565.diff
 cd %SRC_DIR%\%PARAVIEW_SRC%\VTK
 "%GitCmd%" config user.name "Bob T. Builder"
 "%GitCmd%" config user.email "builder@ornl.gov"
 if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2527.diff
-"%GitCmd%" cherry-pick c006b84315b7913c7ad4fbefd35b769c4ca4785d
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2632.diff
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2693.diff
 
