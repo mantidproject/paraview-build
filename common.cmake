@@ -23,7 +23,6 @@ set (VTK_PYTHON_FULL_THREADSAFE ON CACHE BOOL "")
 # System libraries
 ###############################################################################
 set (VTK_USE_SYSTEM_HDF5 ON CACHE BOOL "")
-set (VTK_USE_SYSTEM_JSONCPP ON CACHE BOOL "")
 set (VTK_USE_SYSTEM_PYGMENTS ON CACHE BOOL "")
 set (VTK_USE_SYSTEM_SIX ON CACHE BOOL "")
 set (VTK_USE_SYSTEM_ZLIB ON CACHE BOOL "")
