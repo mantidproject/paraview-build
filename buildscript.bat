@@ -138,6 +138,7 @@ goto:eof
 :fetch-thirdparty
 set TP_DEST_DIR=%1
 set TP_GIT_URL=https://github.com/mantidproject/thirdparty-msvc2015.git
+set TP_BRANCH=21_json_1_7_3
 set _curdir=%CD%
 if not exist %TP_DEST_DIR%\.git (
   call "%GitCmd%" clone %TP_GIT_URL% %TP_DEST_DIR%
@@ -146,6 +147,8 @@ if not exist %TP_DEST_DIR%\.git (
   cd /D %TP_DEST_DIR%
   call "%GitCmd%" pull --rebase
 )
+call "%GitCmd%" checkout %TP_BRANCH%
+call "%GitCmd%" reset --hard origin/%TP_BRANCH%
 call "%GitCmd%" lfs checkout
 cd %_curdir%
 goto:eof
