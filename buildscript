@@ -37,6 +37,7 @@ if [[ $(uname) == "Darwin" ]]; then
   OSX_PATCH_VERSION=$(echo $OSX_VERSION | cut -d. -f3)
 else
   HOME_DIR=/home/${BUILDER}
+  ON_OSX=false
 fi
 
 SRC_DIR=${HOME_DIR}/src
