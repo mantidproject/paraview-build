@@ -29,7 +29,7 @@ echo Building ParaView %PV_VERSION%
 :: Setup visual studio
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 set CMAKE_GENERATOR=Visual Studio 14 2015 Win64
-set BUILD_DIR_SUFFIX=-msvc2015
+set BUILD_DIR_SUFFIX=-msvc2015-%PV_VERSION%
 call "%VS140COMNTOOLS%\..\..\VC\vcvarsall.bat" amd64
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
