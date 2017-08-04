@@ -21,7 +21,7 @@ set MANTID_THIRD_PARTY=%1
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Set the ParaView version to build
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-set PV_VERSION=v5.3.0
+set PV_VERSION=v5.4.0
 set PV_VERSION3=%PV_VERSION:v=%
 echo Building ParaView %PV_VERSION%
 
@@ -29,7 +29,7 @@ echo Building ParaView %PV_VERSION%
 :: Setup visual studio
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 set CMAKE_GENERATOR=Visual Studio 14 2015 Win64
-set BUILD_DIR_SUFFIX=-msvc2015
+set BUILD_DIR_SUFFIX=-msvc2015-%PV_VERSION%
 call "%VS140COMNTOOLS%\..\..\VC\vcvarsall.bat" amd64
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -77,15 +77,12 @@ call:fetch-paraview
 cd %SRC_DIR%\%PARAVIEW_SRC%
 "%GitCmd%" config user.name "Bob T. Builder"
 "%GitCmd%" config user.email "builder@ornl.gov"
-"%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\1211.diff
-"%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\1382.diff
-"%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\1406.diff
+"%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\1565.diff
 cd %SRC_DIR%\%PARAVIEW_SRC%\VTK
 "%GitCmd%" config user.name "Bob T. Builder"
 "%GitCmd%" config user.email "builder@ornl.gov"
 if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2527.diff
-"%GitCmd%" cherry-pick c006b84315b7913c7ad4fbefd35b769c4ca4785d
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2632.diff
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2693.diff
 
@@ -141,6 +138,7 @@ goto:eof
 :fetch-thirdparty
 set TP_DEST_DIR=%1
 set TP_GIT_URL=https://github.com/mantidproject/thirdparty-msvc2015.git
+set TP_BRANCH=21_json_1_7_3
 set _curdir=%CD%
 if not exist %TP_DEST_DIR%\.git (
   call "%GitCmd%" clone %TP_GIT_URL% %TP_DEST_DIR%
@@ -149,6 +147,8 @@ if not exist %TP_DEST_DIR%\.git (
   cd /D %TP_DEST_DIR%
   call "%GitCmd%" pull --rebase
 )
+call "%GitCmd%" checkout %TP_BRANCH%
+call "%GitCmd%" reset --hard origin/%TP_BRANCH%
 call "%GitCmd%" lfs checkout
 cd %_curdir%
 goto:eof

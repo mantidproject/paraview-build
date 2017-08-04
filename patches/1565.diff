@@ -1,0 +1,198 @@
+diff --git a/ParaViewCore/ClientServerCore/Rendering/vtkGeometryRepresentation.cxx b/ParaViewCore/ClientServerCore/Rendering/vtkGeometryRepresentation.cxx
+index 14e56e96ab..761c55d7b3 100644
+--- a/ParaViewCore/ClientServerCore/Rendering/vtkGeometryRepresentation.cxx
++++ b/ParaViewCore/ClientServerCore/Rendering/vtkGeometryRepresentation.cxx
+@@ -344,6 +344,7 @@ int vtkGeometryRepresentation::ProcessViewRequest(
+     vtkNew<vtkMatrix4x4> matrix;
+     this->Actor->GetMatrix(matrix.GetPointer());
+     vtkPVRenderView::SetGeometryBounds(inInfo, this->DataBounds, matrix.GetPointer());
++    vtkPVRenderView::ConfigureGridAxes3DActor(inInfo, this->Actor);
+   }
+   else if (request_type == vtkPVView::REQUEST_UPDATE_LOD())
+   {
+diff --git a/ParaViewCore/ClientServerCore/Rendering/vtkPVRenderView.cxx b/ParaViewCore/ClientServerCore/Rendering/vtkPVRenderView.cxx
+index 2ae587306a..8d3c117218 100644
+--- a/ParaViewCore/ClientServerCore/Rendering/vtkPVRenderView.cxx
++++ b/ParaViewCore/ClientServerCore/Rendering/vtkPVRenderView.cxx
+@@ -1812,6 +1812,25 @@ void vtkPVRenderView::SetGeometryBounds(
+ }
+ 
+ //----------------------------------------------------------------------------
++void vtkPVRenderView::ConfigureGridAxes3DActor(vtkInformation* info, vtkProp3D* Actor)
++{
++  vtkPVRenderView* self = vtkPVRenderView::SafeDownCast(info->Get(VIEW()));
++  if (!self)
++  {
++    vtkGenericWarningMacro("Missing VIEW().");
++    return;
++  }
++
++  if (self->GridAxes3DActor)
++  {
++    self->GridAxes3DActor->SetDataScale(Actor->GetScale());
++    self->GridAxes3DActor->SetDataPosition(Actor->GetPosition());
++    self->GridAxes3DActor->SetDataOrigin(Actor->GetOrigin());
++    self->GridAxes3DActor->SetDataOrientation(Actor->GetOrientation());
++  }
++}
++
++//----------------------------------------------------------------------------
+ void vtkPVRenderView::SetNextStreamedPiece(
+   vtkInformation* info, vtkPVDataRepresentation* repr, vtkDataObject* piece)
+ {
+diff --git a/ParaViewCore/ClientServerCore/Rendering/vtkPVRenderView.h b/ParaViewCore/ClientServerCore/Rendering/vtkPVRenderView.h
+index fd1e7fcd5d..e713ff5386 100644
+--- a/ParaViewCore/ClientServerCore/Rendering/vtkPVRenderView.h
++++ b/ParaViewCore/ClientServerCore/Rendering/vtkPVRenderView.h
+@@ -51,6 +51,7 @@ class vtkLightKit;
+ class vtkMatrix4x4;
+ class vtkPartitionOrderingInterface;
+ class vtkProp;
++class vtkProp3D;
+ class vtkPVAxesWidget;
+ class vtkPVCameraCollection;
+ class vtkPVCenterAxesActor;
+@@ -598,6 +599,10 @@ public:
+    * Set the vtkPVGridAxes3DActor to use for the view.
+    */
+   virtual void SetGridAxes3DActor(vtkPVGridAxes3DActor*);
++  /**
++   * Set the Scale and Position of the vtkPVGridAxes3DActor.
++   */
++  static void ConfigureGridAxes3DActor(vtkInformation* info, vtkProp3D* Actor);
+ 
+   //*****************************************************************
+   // Forwarded to orientation axes widget.
+diff --git a/ParaViewCore/VTKExtensions/Default/vtkPVGridAxes3DActor.cxx b/ParaViewCore/VTKExtensions/Default/vtkPVGridAxes3DActor.cxx
+index fa9b5452be..ee1f849cb6 100644
+--- a/ParaViewCore/VTKExtensions/Default/vtkPVGridAxes3DActor.cxx
++++ b/ParaViewCore/VTKExtensions/Default/vtkPVGridAxes3DActor.cxx
+@@ -17,6 +17,7 @@
+ #include "vtkBoundingBox.h"
+ #include "vtkMatrix4x4.h"
+ #include "vtkObjectFactory.h"
++#include "vtkTransform.h"
+ 
+ #include <algorithm>
+ 
+@@ -26,6 +27,8 @@ vtkPVGridAxes3DActor::vtkPVGridAxes3DActor()
+ {
+   this->DataScale[0] = this->DataScale[1] = this->DataScale[2] = 1.0;
+   this->DataPosition[0] = this->DataPosition[1] = this->DataPosition[2] = 0.0;
++  this->DataOrigin[0] = this->DataOrigin[1] = this->DataOrigin[2] = 0.0;
++  this->DataOrientation[0] = this->DataOrientation[1] = this->DataOrientation[2] = 0.0;
+   this->DataBoundsInflateFactor = 0;
+ 
+   this->TransformedBounds[0] = this->TransformedBounds[2] = this->TransformedBounds[4] = -1.0;
+@@ -87,12 +90,66 @@ void vtkPVGridAxes3DActor::UpdateGridBounds()
+ //----------------------------------------------------------------------------
+ void vtkPVGridAxes3DActor::UpdateGridBoundsUsingModelTransform()
+ {
+-  this->SetPosition(0, 0, 0);
+-  this->SetScale(1, 1, 1);
+   this->SetGridBounds(this->ModelBounds);
++  this->SetOrigin(this->DataOrigin);
++  this->SetOrientation(this->DataOrientation);
++  this->SetPosition(this->DataPosition);
++  this->SetScale(this->DataScale);
+   this->SetUserMatrix(this->ModelTransformMatrix.Get());
+ }
+ 
++void vtkPVGridAxes3DActor::ComputeMatrix()
++{
++  if (this->UseModelTransform)
++  {
++    if (this->IsIdentity)
++    {
++      return;
++    }
++    // check whether or not need to rebuild the matrix
++    if (this->GetMTime() > this->MatrixMTime)
++    {
++      this->GetOrientation();
++      this->Transform->Push();
++      this->Transform->Identity();
++      this->Transform->PostMultiply();
++
++      // The DataSet is scaled after the ModelTransformMatrix has already been applied.
++      // We need to change the order and scale the ModelTransformMatrix.
++      if (this->UserTransform)
++      {
++        this->Transform->Concatenate(this->UserTransform->GetMatrix());
++      }
++
++      // shift back to actor's origin
++      this->Transform->Translate(-this->Origin[0], -this->Origin[1], -this->Origin[2]);
++
++      // scale
++      this->Transform->Scale(this->Scale[0], this->Scale[1], this->Scale[2]);
++
++      // rotate
++      this->Transform->RotateY(this->Orientation[1]);
++      this->Transform->RotateX(this->Orientation[0]);
++      this->Transform->RotateZ(this->Orientation[2]);
++
++      // move back from origin and translate
++      this->Transform->Translate(this->Origin[0] + this->Position[0],
++        this->Origin[1] + this->Position[1],
++        this->Origin[2] + this->Position[2]);
++
++      this->Transform->PreMultiply();
++      this->Transform->GetMatrix(this->Matrix);
++      this->Matrix->Modified();
++      this->MatrixMTime.Modified();
++      this->Transform->Pop();
++    }
++  }
++  else
++  {
++    this->Superclass::ComputeMatrix();
++  }
++}
++
+ //----------------------------------------------------------------------------
+ void vtkPVGridAxes3DActor::UpdateGridBoundsUsingDataBounds()
+ {
+@@ -148,6 +205,8 @@ void vtkPVGridAxes3DActor::ShallowCopy(vtkProp* prop)
+   {
+     this->SetDataScale(other->GetDataScale());
+     this->SetDataPosition(other->GetDataPosition());
++    this->SetDataOrigin(other->GetDataOrigin());
++    this->SetDataOrientation(other->GetDataOrientation());
+     this->SetTransformedBounds(other->GetTransformedBounds());
+     this->SetUseModelTransform(other->GetUseModelTransform());
+     this->SetModelBounds(other->GetModelBounds());
+diff --git a/ParaViewCore/VTKExtensions/Default/vtkPVGridAxes3DActor.h b/ParaViewCore/VTKExtensions/Default/vtkPVGridAxes3DActor.h
+index 2332412d30..1b5fa5c37f 100644
+--- a/ParaViewCore/VTKExtensions/Default/vtkPVGridAxes3DActor.h
++++ b/ParaViewCore/VTKExtensions/Default/vtkPVGridAxes3DActor.h
+@@ -66,6 +66,12 @@ public:
+   vtkSetVector3Macro(DataPosition, double);
+   vtkGetVector3Macro(DataPosition, double);
+ 
++  vtkSetVector3Macro(DataOrigin, double);
++  vtkGetVector3Macro(DataOrigin, double);
++
++  vtkSetVector3Macro(DataOrientation, double);
++  vtkGetVector3Macro(DataOrientation, double);
++
+   //@{
+   /**
+    * Specify the inflate factor used to proportionally
+@@ -93,6 +99,7 @@ public:
+    * superclass.
+    */
+   virtual double* GetBounds() VTK_OVERRIDE;
++  void ComputeMatrix() VTK_OVERRIDE;
+ 
+ protected:
+   vtkPVGridAxes3DActor();
+@@ -105,6 +112,8 @@ protected:
+ 
+   double DataScale[3];
+   double DataPosition[3];
++  double DataOrigin[3];
++  double DataOrientation[3];
+   double DataBoundsInflateFactor;
+   double TransformedBounds[6];
+ 
