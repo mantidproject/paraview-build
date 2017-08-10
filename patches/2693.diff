@@ -1,5 +1,24 @@
+From 13ca68dc79621f3fe7736b0a2c55a7b8712af586 Mon Sep 17 00:00:00 2001
+From: Steven Hahn <hahnse@ornl.gov>
+Date: Wed, 12 Apr 2017 18:45:20 -0400
+Subject: [PATCH] Refactor threshold filter to take advantage of structured
+ data.
+
+Uses vtkDataSet::GetCell(int,int,int) for better performance.
+Fix issues with some implmentations of vtkDataSet::GetCell(int, int, int).
+Update progress during execution of vtkThreshold.
+Inline calls to vtkStructuredGrid::IsCellVisible(vtkIdType).
+---
+ Common/DataModel/vtkRectilinearGrid.cxx |   3 +-
+ Common/DataModel/vtkStructuredGrid.cxx  |  54 +++---
+ Common/DataModel/vtkStructuredGrid.h    |  56 ++++++
+ Common/DataModel/vtkUniformGrid.cxx     |   2 +-
+ Filters/Core/vtkThreshold.cxx           | 330 +++++++++++++++++++++++---------
+ Filters/Core/vtkThreshold.h             |   8 +-
+ 6 files changed, 334 insertions(+), 119 deletions(-)
+
 diff --git a/Common/DataModel/vtkRectilinearGrid.cxx b/Common/DataModel/vtkRectilinearGrid.cxx
-index 5316a62..da83d13 100644
+index 5316a62a23..da83d1322c 100644
 --- a/Common/DataModel/vtkRectilinearGrid.cxx
 +++ b/Common/DataModel/vtkRectilinearGrid.cxx
 @@ -247,10 +247,11 @@ vtkCell *vtkRectilinearGrid::GetCell(int iMin, int jMin, int kMin) {
@@ -16,7 +35,7 @@ index 5316a62..da83d13 100644
    switch (this->DataDescription) {
    case VTK_EMPTY:
 diff --git a/Common/DataModel/vtkStructuredGrid.cxx b/Common/DataModel/vtkStructuredGrid.cxx
-index 703265b..d82eb91 100644
+index 703265b77e..d82eb9190a 100644
 --- a/Common/DataModel/vtkStructuredGrid.cxx
 +++ b/Common/DataModel/vtkStructuredGrid.cxx
 @@ -33,6 +33,8 @@ vtkStandardNewMacro(vtkStructuredGrid);
@@ -127,7 +146,7 @@ index 703265b..d82eb91 100644
 +  this->PointGhostArrayPtrCached = true;
 +}
 diff --git a/Common/DataModel/vtkStructuredGrid.h b/Common/DataModel/vtkStructuredGrid.h
-index fbc688d..da93265 100644
+index fbc688d53e..da93265f03 100644
 --- a/Common/DataModel/vtkStructuredGrid.h
 +++ b/Common/DataModel/vtkStructuredGrid.h
 @@ -258,6 +258,7 @@ protected:
@@ -208,7 +227,7 @@ index fbc688d..da93265 100644
  
  
 diff --git a/Common/DataModel/vtkUniformGrid.cxx b/Common/DataModel/vtkUniformGrid.cxx
-index 1a483c4..6b49b2b 100644
+index 1a483c4392..6b49b2b86e 100644
 --- a/Common/DataModel/vtkUniformGrid.cxx
 +++ b/Common/DataModel/vtkUniformGrid.cxx
 @@ -316,7 +316,6 @@ vtkCell *vtkUniformGrid::GetCell(vtkIdType cellId)
@@ -228,7 +247,7 @@ index 1a483c4..6b49b2b 100644
    if (!this->IsCellVisible(cellId) )
    {
 diff --git a/Filters/Core/vtkThreshold.cxx b/Filters/Core/vtkThreshold.cxx
-index 5df337c..b5c5052 100644
+index 5df337cb5f..b5c5052770 100644
 --- a/Filters/Core/vtkThreshold.cxx
 +++ b/Filters/Core/vtkThreshold.cxx
 @@ -17,10 +17,14 @@
@@ -719,7 +738,7 @@ index 5df337c..b5c5052 100644
      return "UsePointData";
    }
 diff --git a/Filters/Core/vtkThreshold.h b/Filters/Core/vtkThreshold.h
-index c72b7cd..4d77baf 100644
+index c72b7cdf12..4d77baff12 100644
 --- a/Filters/Core/vtkThreshold.h
 +++ b/Filters/Core/vtkThreshold.h
 @@ -192,6 +192,8 @@ protected:
@@ -744,3 +763,6 @@ index c72b7cd..4d77baf 100644
  private:
    vtkThreshold(const vtkThreshold&) VTK_DELETE_FUNCTION;
    void operator=(const vtkThreshold&) VTK_DELETE_FUNCTION;
+-- 
+2.11.1
+
