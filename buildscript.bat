@@ -78,6 +78,7 @@ cd %SRC_DIR%\%PARAVIEW_SRC%
 "%GitCmd%" config user.name "Bob T. Builder"
 "%GitCmd%" config user.email "builder@ornl.gov"
 "%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\1565.diff
+"%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\1850.diff
 cd %SRC_DIR%\%PARAVIEW_SRC%\VTK
 "%GitCmd%" config user.name "Bob T. Builder"
 "%GitCmd%" config user.email "builder@ornl.gov"
