@@ -1,5 +1,5 @@
 diff --git a/Common/Core/CMakeLists.txt b/Common/Core/CMakeLists.txt
-index 9c33e1262f..86ae86aeac 100644
+index 9c33e1262f..ab32ee9fc1 100644
 --- a/Common/Core/CMakeLists.txt
 +++ b/Common/Core/CMakeLists.txt
 @@ -180,6 +180,7 @@ SET(Module_SRCS
@@ -10,6 +10,20 @@ index 9c33e1262f..86ae86aeac 100644
    vtkDataArraySelection.cxx
    vtkDebugLeaks.cxx
    vtkDebugLeaksManager.cxx
+@@ -714,6 +715,13 @@ set_source_files_properties(
+   PROPERTIES SKIP_HEADER_INSTALL 1
+ )
+ 
++if(MSVC)
++  set_source_files_properties(
++    vtkDataArray.cxx
++    PROPERTIES COMPILE_FLAGS /bigobj
++    )
++endif()
++
+ # Need nsl to resolve gethostbyname on SunOS-5.8
+ # and socket also
+ if(CMAKE_SYSTEM MATCHES "SunOS.*")
 diff --git a/Common/Core/vtkDataArray.cxx b/Common/Core/vtkDataArray.cxx
 index 75c0795c32..626cc39aca 100644
 --- a/Common/Core/vtkDataArray.cxx
@@ -53,7 +67,7 @@ index 75c0795c32..626cc39aca 100644
  };
  
 diff --git a/Common/Core/vtkDataArrayPrivate.txx b/Common/Core/vtkDataArrayPrivate.txx
-index 995b8e8fcc..10403c42f5 100644
+index 995b8e8fcc..6c53b5e2d0 100644
 --- a/Common/Core/vtkDataArrayPrivate.txx
 +++ b/Common/Core/vtkDataArrayPrivate.txx
 @@ -18,9 +18,13 @@
@@ -70,7 +84,7 @@ index 995b8e8fcc..10403c42f5 100644
  
  namespace vtkDataArrayPrivate
  {
-@@ -89,196 +93,369 @@ bool isinf(T x)
+@@ -89,196 +93,368 @@ bool isinf(T x)
  }
  }
  
@@ -546,13 +560,13 @@ index 995b8e8fcc..10403c42f5 100644
 +bool DoComputeScalarRange(ArrayT *array, double *ranges, ValueType tag)
  {
    vtkDataArrayAccessor<ArrayT> access(array);
-   typedef typename vtkDataArrayAccessor<ArrayT>::APIType APIType;
+-  typedef typename vtkDataArrayAccessor<ArrayT>::APIType APIType;
 -
 -  const vtkIdType numTuples = array->GetNumberOfTuples();
    const int numComp = array->GetNumberOfComponents();
  
    //setup the initial ranges to be the max,min for double
-@@ -289,7 +466,7 @@ bool DoComputeScalarRange(ArrayT *array, double *ranges)
+@@ -289,7 +465,7 @@ bool DoComputeScalarRange(ArrayT *array, double *ranges)
    }
  
    //do this after we make sure range is max to min
@@ -561,7 +575,7 @@ index 995b8e8fcc..10403c42f5 100644
    {
      return false;
    }
-@@ -298,84 +475,51 @@ bool DoComputeScalarRange(ArrayT *array, double *ranges)
+@@ -298,84 +474,51 @@ bool DoComputeScalarRange(ArrayT *array, double *ranges)
    //compiler detect it can perform loop optimizations.
    if (numComp == 1)
    {
@@ -657,7 +671,7 @@ index 995b8e8fcc..10403c42f5 100644
    range[0] = vtkTypeTraits<double>::Max();
    range[1] = vtkTypeTraits<double>::Min();
  
-@@ -385,35 +529,17 @@ bool DoComputeVectorRange(ArrayT *array, double range[2])
+@@ -385,35 +528,17 @@ bool DoComputeVectorRange(ArrayT *array, double range[2])
      return false;
    }
  
@@ -697,7 +711,7 @@ index 995b8e8fcc..10403c42f5 100644
  
    range[0] = vtkTypeTraits<double>::Max();
    range[1] = vtkTypeTraits<double>::Min();
-@@ -424,27 +550,9 @@ bool DoComputeVectorFiniteRange(ArrayT *array, double range[2])
+@@ -424,27 +549,9 @@ bool DoComputeVectorFiniteRange(ArrayT *array, double range[2])
      return false;
    }
  
