@@ -86,6 +86,7 @@ git config user.email "builder@ornl.gov"
 git apply ${SCRIPT_DIR}/patches/1565.diff
 git apply ${SCRIPT_DIR}/patches/1850.diff
 git apply ${SCRIPT_DIR}/patches/1866.diff
+git apply ${SCRIPT_DIR}/patches/1882.diff
 if [[ "$ON_OSX" == false ]]; then
   git revert a99ea990a1bc34f072b50f794778e93595bcda8f
 fi
