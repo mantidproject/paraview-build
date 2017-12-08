@@ -81,6 +81,7 @@ cd %SRC_DIR%\%PARAVIEW_SRC%
 "%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\1850.diff
 "%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\1866.diff
 "%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\1882.diff
+"%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\remove-vtkguisupportqt-dep.diff
 cd %SRC_DIR%\%PARAVIEW_SRC%\VTK
 "%GitCmd%" config user.name "Bob T. Builder"
 "%GitCmd%" config user.email "builder@ornl.gov"

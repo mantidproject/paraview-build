@@ -1,0 +1,29 @@
+diff --git a/Catalyst/Editions/Rendering-Base/ParaViewCore/VTKExtensions/Rendering/module.cmake b/Catalyst/Editions/Rendering-Base/ParaViewCore/VTKExtensions/Rendering/module.cmake
+index 44a7d06..5bd4a8f 100644
+--- a/Catalyst/Editions/Rendering-Base/ParaViewCore/VTKExtensions/Rendering/module.cmake
++++ b/Catalyst/Editions/Rendering-Base/ParaViewCore/VTKExtensions/Rendering/module.cmake
+@@ -13,9 +13,6 @@ if(PARAVIEW_ENABLE_PYTHON)
+   #list(APPEND __dependencies vtkRenderingMatplotlib)
+ endif()
+
+-if (PARAVIEW_ENABLE_QT_SUPPORT)
+-  list(APPEND __dependencies vtkGUISupportQt)
+-endif()
+ if("${VTK_RENDERING_BACKEND}" STREQUAL "OpenGL")
+   #list(APPEND __dependencies vtkRenderingLIC)
+   if (PARAVIEW_USE_MPI)
+diff --git a/ParaViewCore/VTKExtensions/Rendering/module.cmake b/ParaViewCore/VTKExtensions/Rendering/module.cmake
+index f92b157..942c6ea 100644
+--- a/ParaViewCore/VTKExtensions/Rendering/module.cmake
++++ b/ParaViewCore/VTKExtensions/Rendering/module.cmake
+@@ -13,10 +13,6 @@ if(PARAVIEW_ENABLE_MATPLOTLIB)
+   list(APPEND __dependencies vtkRenderingMatplotlib)
+ endif()
+
+-if (PARAVIEW_ENABLE_QT_SUPPORT)
+-  list(APPEND __dependencies vtkGUISupportQt)
+-endif()
+-
+ if("${VTK_RENDERING_BACKEND}" STREQUAL "OpenGL")
+   list(APPEND __dependencies vtkRenderingLIC)
+   if (PARAVIEW_USE_MPI)
