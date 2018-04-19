@@ -1,8 +1,270 @@
+diff --git a/Common/DataModel/Testing/Cxx/otherStructuredGrid.cxx b/Common/DataModel/Testing/Cxx/otherStructuredGrid.cxx
+index 3ee5a3d4ac..6374f5711c 100644
+--- a/Common/DataModel/Testing/Cxx/otherStructuredGrid.cxx
++++ b/Common/DataModel/Testing/Cxx/otherStructuredGrid.cxx
+@@ -25,6 +25,7 @@
+ #include "vtkIdList.h"
+ #include "vtkLongArray.h"
+ #include "vtkMathUtilities.h"
++#include "vtkNew.h"
+ #include "vtkPointData.h"
+ #include "vtkShortArray.h"
+ #include "vtkStructuredGrid.h"
+@@ -535,11 +536,248 @@ int TestOSG(ostream& strm)
+   }
+   strm << endl << endl;
+ 
+-  // Test Thread Safe GetCell
++  // Test threadsafe GetCell(i,j,k)
+   vtkGenericCell *gcell3D = vtkGenericCell::New();
+   vtkGenericCell *gcell2D = vtkGenericCell::New();
+   vtkGenericCell *gcell1D = vtkGenericCell::New();
+   vtkGenericCell *gcell0D = vtkGenericCell::New();
++
++  i = 10; j = 15; k = 7;
++  cellId = k * (19 * 19) + j * 19 + i;
++  sg3D->GetCell(i,j,k,gcell3D);
++  if (gcell3D == NULL)
++  {
++    std::cerr << "vtkStructuredGrid::GetCell returned NULL instead of a valid cell.\n";
++    return 1;
++  }
++  if (gcell3D->GetCellType() != VTK_HEXAHEDRON)
++  {
++    std::cerr << "vtkStructuredGrid::GetCell returned the wrong cell type.\n"
++              << "Expected: " << VTK_HEXAHEDRON << " Returned: " << gcell3D->GetCellType() << '\n';
++    return 1;
++  }
++  strm << "gcell3D: " << *gcell3D ;
++  sg3D->GetCellPoints (cellId, ids);
++  strm << "Ids for cell " << cellId << " are ";
++  for (ii = 0; ii < ids->GetNumberOfIds(); ii++)
++  {
++    strm << ids->GetId(ii) << " ";
++  }
++  strm << endl << endl;
++
++  i = 10; j = 15;
++  cellId = j * 19 + i;
++  sg2Dxy->GetCell(i,j,0,gcell2D);
++  if (gcell2D == NULL)
++  {
++    std::cerr << "vtkStructuredGrid::GetCell returned NULL instead of a valid cell.\n";
++    return 1;
++  }
++  if (gcell2D->GetCellType() != VTK_QUAD)
++  {
++    std::cerr << "vtkStructuredGrid::GetCell returned the wrong cell type.\n"
++              << "Expected: " << VTK_QUAD << " Returned: " << gcell2D->GetCellType() << '\n';
++    return 1;
++  }
++
++  gcell2D->GetBounds(bounds);
++  if (!vtkMathUtilities::FuzzyCompare(bounds[4],bounds[5]))
++  {
++    std::cerr << "sg2Dxy has finite width along z\n";
++    return 1;
++  }
++  strm << "gcell2D: " << *gcell2D;
++  sg2Dxy->GetCellPoints (cellId, ids);
++  strm << "Ids for cell " << cellId << " are ";
++  for (ii = 0; ii < ids->GetNumberOfIds(); ii++)
++  {
++    strm << ids->GetId(ii) << " ";
++  }
++  strm << endl << endl;
++
++  i = 10; j = 15;
++  cellId = j * 19 + i;
++  sg2Dxz->GetCell(i,0,j,gcell2D);
++  if (cell2D == NULL)
++  {
++    std::cerr << "vtkStructuredGrid::GetCell returned NULL instead of a valid cell.\n";
++    return 1;
++  }
++  if (gcell2D->GetCellType() != VTK_QUAD)
++  {
++    std::cerr << "vtkStructuredGrid::GetCell returned the wrong cell type.\n"
++              << "Expected: " << VTK_QUAD << " Returned: " << gcell2D->GetCellType() << '\n';
++    return 1;
++  }
++  gcell2D->GetBounds(bounds);
++  if (!vtkMathUtilities::FuzzyCompare(bounds[2],bounds[3]))
++  {
++    std::cerr << "sg2Dxz has finite width along y\n";
++    return 1;
++  }
++  strm << "gcell2D: " << *gcell2D;
++  sg2Dxz->GetCellPoints (cellId, ids);
++  strm << "Ids for cell " << cellId << " are ";
++  for (ii = 0; ii < ids->GetNumberOfIds(); ii++)
++  {
++    strm << ids->GetId(ii) << " ";
++  }
++  strm << endl << endl;
++
++  i = 10; j = 15;
++  cellId = j * 19 + i;
++  sg2Dyz->GetCell(0,i,j,gcell2D);
++  if (gcell2D == NULL)
++  {
++    std::cerr << "vtkStructuredGrid::GetCell returned NULL instead of a valid cell.\n";
++    return 1;
++  }
++  if (gcell2D->GetCellType() != VTK_QUAD)
++  {
++    std::cerr << "vtkStructuredGrid::GetCell returned the wrong cell type.\n"
++              << "Expected: " << VTK_QUAD << " Returned: " << cell2D->GetCellType() << '\n';
++    return 1;
++  }
++  gcell2D->GetBounds(bounds);
++  if (!vtkMathUtilities::FuzzyCompare(bounds[0],bounds[1]))
++  {
++    std::cerr << "sg2Dyz has finite width along x\n";
++    return 1;
++  }
++  strm << "gcell2D: " << *gcell2D;
++  sg2Dyz->GetCellPoints (cellId, ids);
++  strm << "Ids for cell " << cellId << " are ";
++  for (ii = 0; ii < ids->GetNumberOfIds(); ii++)
++  {
++    strm << ids->GetId(ii) << " ";
++  }
++  strm << endl << endl;
++
++  i = 10;
++  cellId = i;
++  sg1Dx->GetCell(i,0,0,gcell1D);
++  if (gcell1D == NULL)
++  {
++    std::cerr << "vtkStructuredGrid::GetCell returned NULL instead of a valid cell.\n";
++    return 1;
++  }
++  if (gcell1D->GetCellType() != VTK_LINE)
++  {
++    std::cerr << "vtkStructuredGrid::GetCell returned the wrong cell type.\n"
++              << "Expected: " << VTK_LINE << " Returned: " << gcell1D->GetCellType() << '\n';
++    return 1;
++  }
++  gcell1D->GetBounds(bounds);
++  if (!vtkMathUtilities::FuzzyCompare(bounds[2],bounds[3]))
++  {
++    std::cerr << "sg1Dx has finite width along y\n";
++    return 1;
++  }
++  else if(!vtkMathUtilities::FuzzyCompare(bounds[4],bounds[5]))
++  {
++    std::cerr << "sg1Dx has finite width along z\n";
++    return 1;
++  }
++  strm << "sCell: " << *gcell1D;
++  sg1Dx->GetCellPoints (cellId, ids);
++  strm << "Ids for cell " << cellId << " are ";
++  for (ii = 0; ii < ids->GetNumberOfIds(); ii++)
++  {
++    strm << ids->GetId(ii) << " ";
++  }
++  strm << endl << endl;
++
++  i = 10;
++  cellId = i;
++  sg1Dy->GetCell(0,i,0,gcell1D);
++  if (gcell1D == NULL)
++  {
++    std::cerr << "vtkStructuredGrid::GetCell returned NULL instead of a valid cell.\n";
++    return 1;
++  }
++  if (gcell1D->GetCellType() != VTK_LINE)
++  {
++    std::cerr << "vtkStructuredGrid::GetCell returned the wrong cell type.\n"
++              << "Expected: " << VTK_LINE << " Returned: " << gcell1D->GetCellType() << '\n';
++    return 1;
++  }
++  gcell1D->GetBounds(bounds);
++  if (!vtkMathUtilities::FuzzyCompare(bounds[0],bounds[1]))
++  {
++    std::cerr << "sg1Dy has finite width along x\n";
++    return 1;
++  }
++  else if(!vtkMathUtilities::FuzzyCompare(bounds[4],bounds[5]))
++  {
++    std::cerr << "sg1Dy has finite width along z\n";
++    return 1;
++  }
++  strm << "gcell1D: " << *gcell1D;
++  sg1Dy->GetCellPoints (cellId, ids);
++  strm << "Ids for cell " << cellId << " are ";
++  for (ii = 0; ii < ids->GetNumberOfIds(); ii++)
++  {
++    strm << ids->GetId(ii) << " ";
++  }
++  strm << endl << endl;
++
++  i = 10;
++  cellId = i;
++  sg1Dz->GetCell(0,0,i,gcell1D);
++  if (gcell1D == NULL)
++  {
++    std::cerr << "vtkStructuredGrid::GetCell returned NULL instead of a valid cell.\n";
++    return 1;
++  }
++  if (gcell1D->GetCellType() != VTK_LINE)
++  {
++    std::cerr << "vtkStructuredGrid::GetCell returned the wrong cell type.\n"
++              << "Expected: " << VTK_LINE << " Returned: " << gcell1D->GetCellType() << '\n';
++    return 1;
++  }
++  gcell1D->GetBounds(bounds);
++  if (!vtkMathUtilities::FuzzyCompare(bounds[0],bounds[1]))
++  {
++    std::cerr << "sg1Dz has finite width along x\n";
++    return 1;
++  }
++  else if(!vtkMathUtilities::FuzzyCompare(bounds[2],bounds[3]))
++  {
++    std::cerr << "sg1Dz has finite width along y\n";
++    return 1;
++  }
++  strm << "gcell1D: " << gcell1D;
++  sg1Dz->GetCellPoints (cellId, ids);
++  strm << "Ids for cell " << cellId << " are ";
++  for (ii = 0; ii < ids->GetNumberOfIds(); ii++)
++  {
++    strm << ids->GetId(ii) << " ";
++  }
++  strm << endl << endl;
++
++  cellId = 0;
++  sg0D->GetCell(0,0,0,gcell0D);
++  if (gcell0D == NULL)
++  {
++    std::cerr << "vtkStructuredGrid::GetCell returned NULL instead of a valid cell.\n";
++    return 1;
++  }
++  if (gcell0D->GetCellType() != VTK_VERTEX)
++  {
++    std::cerr << "vtkStructuredGrid::GetCell returned the wrong cell type.\n"
++              << "Expected: " << VTK_VERTEX << " Returned: " << gcell0D->GetCellType() << '\n';
++    return 1;
++  }
++  strm << "gcell0D: " << *gcell0D;
++  sg0D->GetCellPoints (cellId, ids);
++  strm << "Ids for cell " << cellId << " are ";
++  for (ii = 0; ii < ids->GetNumberOfIds(); ii++)
++  {
++    strm << ids->GetId(ii) << " ";
++  }
++  strm << endl << endl;
++
++  // Test Thread Safe GetCell
+   i = 10; j = 15; k = 7;
+   sg3D->GetCell(k * (19 * 19) + j * 19 + i, gcell3D);
+   strm << "gcell3D: " << *gcell3D ;
 diff --git a/Common/DataModel/vtkGenericCell.cxx b/Common/DataModel/vtkGenericCell.cxx
-index 368d0fe..127e511 100644
+index 24350004f9..b8011696cf 100644
 --- a/Common/DataModel/vtkGenericCell.cxx
 +++ b/Common/DataModel/vtkGenericCell.cxx
-@@ -57,15 +57,16 @@ vtkStandardNewMacro(vtkGenericCell);
+@@ -63,15 +63,16 @@ vtkStandardNewMacro(vtkGenericCell);
  
  //----------------------------------------------------------------------------
  // Construct cell.
@@ -22,7 +284,7 @@ index 368d0fe..127e511 100644
  }
  
  //----------------------------------------------------------------------------
-@@ -320,22 +321,22 @@ vtkCell *vtkGenericCell::InstantiateCell(int cellType)
+@@ -326,22 +327,22 @@ vtkCell *vtkGenericCell::InstantiateCell(int cellType)
      cell = vtkQuadraticPyramid::New();
      break;
    case VTK_QUADRATIC_LINEAR_QUAD:
@@ -51,7 +313,7 @@ index 368d0fe..127e511 100644
      break;
    case VTK_BIQUADRATIC_TRIANGLE:
      cell = vtkBiQuadraticTriangle::New();
-@@ -353,6 +354,18 @@ vtkCell *vtkGenericCell::InstantiateCell(int cellType)
+@@ -377,6 +378,18 @@ vtkCell *vtkGenericCell::InstantiateCell(int cellType)
    return cell;
  }
  
@@ -70,12 +332,12 @@ index 368d0fe..127e511 100644
  //----------------------------------------------------------------------------
  // Set the type of dereferenced cell. Checks to see whether cell type
  // has changed and creates a new cell only if necessary.
-@@ -362,19 +375,19 @@ void vtkGenericCell::SetCellType(int cellType)
+@@ -386,19 +399,19 @@ void vtkGenericCell::SetCellType(int cellType)
    {
      this->Points->UnRegister(this);
      this->PointIds->UnRegister(this);
-+    this->Points = NULL;
-     this->PointIds = NULL;
++    this->Points = nullptr;
+     this->PointIds = nullptr;
 -    this->Cell->Delete();
 -
 -    vtkCell *cell = vtkGenericCell::InstantiateCell(cellType);
@@ -101,7 +363,7 @@ index 368d0fe..127e511 100644
      this->Points->Register(this);
      this->PointIds = this->Cell->PointIds;
 diff --git a/Common/DataModel/vtkGenericCell.h b/Common/DataModel/vtkGenericCell.h
-index 9c48eb0..bc1f082 100644
+index 2b11896b1f..b0b8148903 100644
 --- a/Common/DataModel/vtkGenericCell.h
 +++ b/Common/DataModel/vtkGenericCell.h
 @@ -32,6 +32,9 @@
@@ -114,7 +376,7 @@ index 9c48eb0..bc1f082 100644
  
  class VTKCOMMONDATAMODEL_EXPORT vtkGenericCell : public vtkCell
  {
-@@ -163,15 +166,17 @@ public:
+@@ -175,15 +178,17 @@ public:
     */
    static vtkCell* InstantiateCell(int cellType);
  
@@ -123,7 +385,7 @@ index 9c48eb0..bc1f082 100644
  
  protected:
    vtkGenericCell();
-   ~vtkGenericCell() VTK_OVERRIDE;
+   ~vtkGenericCell() override;
  
 -  vtkCell *Cell;
 +  vtkSmartPointer<vtkCell> Cell;
@@ -131,11 +393,11 @@ index 9c48eb0..bc1f082 100644
  
  private:
 +  vtkSmartPointer<vtkCell> GetCellFromCache(int cellType);
-   vtkGenericCell(const vtkGenericCell&) VTK_DELETE_FUNCTION;
-   void operator=(const vtkGenericCell&) VTK_DELETE_FUNCTION;
+   vtkGenericCell(const vtkGenericCell&) = delete;
+   void operator=(const vtkGenericCell&) = delete;
  };
 diff --git a/Common/DataModel/vtkStructuredGrid.cxx b/Common/DataModel/vtkStructuredGrid.cxx
-index 703265b..5626138 100644
+index 28ed138b66..9b98bee76c 100644
 --- a/Common/DataModel/vtkStructuredGrid.cxx
 +++ b/Common/DataModel/vtkStructuredGrid.cxx
 @@ -415,8 +415,9 @@ void vtkStructuredGrid::GetCell(vtkIdType cellId, vtkGenericCell *cell)
@@ -218,10 +480,11 @@ index 703265b..5626138 100644
  
        cell->PointIds->SetId(0,idx);
        cell->PointIds->SetId(1,idx+offset1);
-@@ -523,6 +524,127 @@ void vtkStructuredGrid::GetCell(vtkIdType cellId, vtkGenericCell *cell)
+@@ -522,6 +523,127 @@ void vtkStructuredGrid::GetCell(vtkIdType cellId, vtkGenericCell *cell)
+   }
  }
  
- //----------------------------------------------------------------------------
++//----------------------------------------------------------------------------
 +void vtkStructuredGrid::GetCell(int i, int j, int k, vtkGenericCell *cell)
 +{
 +  // Update dimensions
@@ -342,10 +605,9 @@ index 703265b..5626138 100644
 +}
 +
 +
-+//----------------------------------------------------------------------------
+ //----------------------------------------------------------------------------
  // Fast implementation of GetCellBounds().  Bounds are calculated without
  // constructing a cell.
- void vtkStructuredGrid::GetCellBounds(vtkIdType cellId, double bounds[6])
 @@ -1045,8 +1167,9 @@ void vtkStructuredGrid::GetCellNeighbors(vtkIdType cellId, vtkIdList *ptIds,
        return;
  
@@ -390,19 +652,19 @@ index 703265b..5626138 100644
  
  }
 diff --git a/Common/DataModel/vtkStructuredGrid.h b/Common/DataModel/vtkStructuredGrid.h
-index fbc688d..c475011 100644
+index 8b422f0148..e256841fae 100644
 --- a/Common/DataModel/vtkStructuredGrid.h
 +++ b/Common/DataModel/vtkStructuredGrid.h
 @@ -84,6 +84,7 @@ public:
      {this->vtkPointSet::GetPoint(ptId,p);}
-   vtkCell *GetCell(vtkIdType cellId) VTK_OVERRIDE;
-   vtkCell *GetCell(int i, int j, int k) VTK_OVERRIDE;
+   vtkCell *GetCell(vtkIdType cellId) override;
+   vtkCell *GetCell(int i, int j, int k) override;
 +  void GetCell(int i, int j, int k, vtkGenericCell *cell);
-   void GetCell(vtkIdType cellId, vtkGenericCell *cell) VTK_OVERRIDE;
-   void GetCellBounds(vtkIdType cellId, double bounds[6]) VTK_OVERRIDE;
-   int GetCellType(vtkIdType cellId) VTK_OVERRIDE;
+   void GetCell(vtkIdType cellId, vtkGenericCell *cell) override;
+   void GetCellBounds(vtkIdType cellId, double bounds[6]) override;
+   int GetCellType(vtkIdType cellId) override;
 diff --git a/Filters/Geometry/Testing/Cxx/UnitTestDataSetSurfaceFilter.cxx b/Filters/Geometry/Testing/Cxx/UnitTestDataSetSurfaceFilter.cxx
-index 1c6dc64..4d8b829 100644
+index 010079e42b..9391e7e7ee 100644
 --- a/Filters/Geometry/Testing/Cxx/UnitTestDataSetSurfaceFilter.cxx
 +++ b/Filters/Geometry/Testing/Cxx/UnitTestDataSetSurfaceFilter.cxx
 @@ -398,6 +398,18 @@ int UnitTestDataSetSurfaceFilter(int, char*[])
@@ -425,7 +687,7 @@ index 1c6dc64..4d8b829 100644
    }
    // Error and warnings
 diff --git a/Filters/Geometry/vtkDataSetSurfaceFilter.cxx b/Filters/Geometry/vtkDataSetSurfaceFilter.cxx
-index b562523..d0fafac 100644
+index 8f1341e38d..77d019cda2 100644
 --- a/Filters/Geometry/vtkDataSetSurfaceFilter.cxx
 +++ b/Filters/Geometry/vtkDataSetSurfaceFilter.cxx
 @@ -14,6 +14,7 @@
@@ -444,16 +706,16 @@ index b562523..d0fafac 100644
  #include "vtkNew.h"
  #include "vtkObjectFactory.h"
  #include "vtkPointData.h"
-@@ -32,6 +34,8 @@
- #include "vtkPyramid.h"
+@@ -33,6 +35,8 @@
  #include "vtkRectilinearGrid.h"
+ #include "vtkRectilinearGridGeometryFilter.h"
  #include "vtkSmartPointer.h"
 +#include "vtkSMPThreadLocalObject.h"
 +#include "vtkSMPTools.h"
  #include "vtkStreamingDemandDrivenPipeline.h"
  #include "vtkStructuredGridGeometryFilter.h"
  #include "vtkStructuredGrid.h"
-@@ -1038,178 +1042,222 @@ void vtkDataSetSurfaceFilter::ExecuteFaceQuads(vtkDataSet *input,
+@@ -1070,178 +1074,222 @@ void vtkDataSetSurfaceFilter::ExecuteFaceQuads(vtkDataSet *input,
    }
  }
  
@@ -477,14 +739,12 @@ index b562523..d0fafac 100644
 -  vtkPointData *outputPD = output->GetPointData();
 -  vtkCellData *outputCD = output->GetCellData();
 -  if (numCells == 0)
--  {
--    vtkWarningMacro(<<"Number of cells is zero, no data to process.");
++  if (OrigIds != nullptr)
+   {
+-    vtkDebugMacro(<<"Number of cells is zero, no data to process.");
 -    return 1;
--  }
-+    if (OrigIds != NULL)
-+    {
-+        OrigIds->InsertValue(destIndex, originalId);
-+    }
++    OrigIds->InsertValue(destIndex, originalId);
+   }
 +}
  
 -  if (this->PassThroughCellIds)
@@ -551,8 +811,7 @@ index b562523..d0fafac 100644
 -    abort = this->GetAbortExecute();
 -    for (int j = 0; j < dims[1]; ++j)
 +    if (Self->PassThroughCellIds)
-     {
--      for (int i = 0; i < dims[0]; ++i)
++    {
 +       vtkNew<vtkIdTypeArray> OriginalCellIds;
 +       OriginalCellIds->SetName(Self->GetOriginalCellIdsName());
 +       OriginalCellIds->SetNumberOfComponents(1);
@@ -602,7 +861,8 @@ index b562523..d0fafac 100644
 +    Input->GetCellDims(dims);
 +    vtkIdType d01 = static_cast<vtkIdType>(dims[0])*dims[1];
 +    for (int k = begin; k < end; ++k)
-+    {
+     {
+-      for (int i = 0; i < dims[0]; ++i)
 +      Lock->Lock();
 +      Self->UpdateProgress(static_cast<double>(Progress++) / dims[2]);
 +      abort = Self->GetAbortExecute();
@@ -611,13 +871,13 @@ index b562523..d0fafac 100644
        {
 -        vtkIdType cellId = d01*k + dims[0]*j + i;
 -        if (!input->IsCellVisible(cellId))
-+        for (int i = 0; i < dims[0]; ++i)
-         {
+-        {
 -          continue;
 -        }
 -        vtkCell *cell = input->GetCell(i,j,k);
 -        switch (cell->GetCellDimension())
--        {
++        for (int i = 0; i < dims[0]; ++i)
+         {
 -          // create new points and then cell
 -          case 0:
 -          case 1:
@@ -701,13 +961,7 @@ index b562523..d0fafac 100644
 -                pts->Reset();
 -                for (int n = 0; n < npts; ++n)
 +                else
-                 {
--                  ptId = face->GetPointId(n);
--                  input->GetPoint(ptId, x);
--                  pt = newPts->InsertNextPoint(x);
--                  outputPD->CopyData(pd, ptId, pt);
--                  this->RecordOrigPointId(pt, ptId);
--                  pts->InsertId(n, pt);
++                {
 +                  Input->GetCellNeighbors(cellId, face->PointIds, cellIds, even);
 +                }
 +                // faces with only blank neighbors count as external faces
@@ -721,7 +975,13 @@ index b562523..d0fafac 100644
 +                  }
 +                }
 +                if (noNeighbors)
-+                {
+                 {
+-                  ptId = face->GetPointId(n);
+-                  input->GetPoint(ptId, x);
+-                  pt = newPts->InsertNextPoint(x);
+-                  outputPD->CopyData(pd, ptId, pt);
+-                  this->RecordOrigPointId(pt, ptId);
+-                  pts->InsertId(n, pt);
 +                  npts = face->GetNumberOfPoints();
 +                  pts->SetNumberOfIds(npts);
 +                  for (int n = 0; n < npts; ++n)
@@ -788,7 +1048,7 @@ index b562523..d0fafac 100644
 -  if (this->OriginalCellIds)
 -  {
 -    this->OriginalCellIds->Delete();
--    this->OriginalCellIds = NULL;
+-    this->OriginalCellIds = nullptr;
 -  }
 -  if (this->OriginalPointIds)
 +//----------------------------------------------------------------------------
@@ -799,7 +1059,7 @@ index b562523..d0fafac 100644
 +  if (numCells  == 0)
    {
 -    this->OriginalPointIds->Delete();
--    this->OriginalPointIds = NULL;
+-    this->OriginalPointIds = nullptr;
 +    vtkWarningMacro(<<"Number of cells is zero, no data to process.");
 +    return 1;
    }
@@ -823,7 +1083,7 @@ index b562523..d0fafac 100644
  }
  
 diff --git a/Filters/Geometry/vtkDataSetSurfaceFilter.h b/Filters/Geometry/vtkDataSetSurfaceFilter.h
-index 48564ea..b2f43e3 100644
+index 7fd6466847..4f39f159b1 100644
 --- a/Filters/Geometry/vtkDataSetSurfaceFilter.h
 +++ b/Filters/Geometry/vtkDataSetSurfaceFilter.h
 @@ -265,7 +265,7 @@ protected:
@@ -833,5 +1093,5 @@ index 48564ea..b2f43e3 100644
 -
 +  friend class StructuredWithBlankingWorker;
  private:
-   vtkDataSetSurfaceFilter(const vtkDataSetSurfaceFilter&) VTK_DELETE_FUNCTION;
-   void operator=(const vtkDataSetSurfaceFilter&) VTK_DELETE_FUNCTION;
+   vtkDataSetSurfaceFilter(const vtkDataSetSurfaceFilter&) = delete;
+   void operator=(const vtkDataSetSurfaceFilter&) = delete;

@@ -1,24 +1,5 @@
-From 13ca68dc79621f3fe7736b0a2c55a7b8712af586 Mon Sep 17 00:00:00 2001
-From: Steven Hahn <hahnse@ornl.gov>
-Date: Wed, 12 Apr 2017 18:45:20 -0400
-Subject: [PATCH] Refactor threshold filter to take advantage of structured
- data.
-
-Uses vtkDataSet::GetCell(int,int,int) for better performance.
-Fix issues with some implmentations of vtkDataSet::GetCell(int, int, int).
-Update progress during execution of vtkThreshold.
-Inline calls to vtkStructuredGrid::IsCellVisible(vtkIdType).
----
- Common/DataModel/vtkRectilinearGrid.cxx |   3 +-
- Common/DataModel/vtkStructuredGrid.cxx  |  54 +++---
- Common/DataModel/vtkStructuredGrid.h    |  56 ++++++
- Common/DataModel/vtkUniformGrid.cxx     |   2 +-
- Filters/Core/vtkThreshold.cxx           | 330 +++++++++++++++++++++++---------
- Filters/Core/vtkThreshold.h             |   8 +-
- 6 files changed, 334 insertions(+), 119 deletions(-)
-
 diff --git a/Common/DataModel/vtkRectilinearGrid.cxx b/Common/DataModel/vtkRectilinearGrid.cxx
-index 5316a62a23..da83d1322c 100644
+index 1a89f5b801..4bccf6704e 100644
 --- a/Common/DataModel/vtkRectilinearGrid.cxx
 +++ b/Common/DataModel/vtkRectilinearGrid.cxx
 @@ -247,10 +247,11 @@ vtkCell *vtkRectilinearGrid::GetCell(int iMin, int jMin, int kMin) {
@@ -35,7 +16,7 @@ index 5316a62a23..da83d1322c 100644
    switch (this->DataDescription) {
    case VTK_EMPTY:
 diff --git a/Common/DataModel/vtkStructuredGrid.cxx b/Common/DataModel/vtkStructuredGrid.cxx
-index 703265b77e..d82eb9190a 100644
+index 28ed138b66..91cd608b5b 100644
 --- a/Common/DataModel/vtkStructuredGrid.cxx
 +++ b/Common/DataModel/vtkStructuredGrid.cxx
 @@ -33,6 +33,8 @@ vtkStandardNewMacro(vtkStructuredGrid);
@@ -65,11 +46,11 @@ index 703265b77e..d82eb9190a 100644
  vtkCell *vtkStructuredGrid::GetCell(int i, int j, int k) {
 -  vtkIdType cellId =
 -      i + (j + (k * (this->Dimensions[1] - 1))) * (this->Dimensions[0] - 1);
-   vtkCell *cell = NULL;
+   vtkCell *cell = nullptr;
    vtkIdType idx;
    int d01, offset1, offset2;
 @@ -287,15 +292,16 @@ vtkCell *vtkStructuredGrid::GetCell(int i, int j, int k) {
-     return NULL;
+     return nullptr;
    }
  
 +  // Update dimensions
@@ -88,10 +69,11 @@ index 703265b77e..d82eb9190a 100644
    switch (this->DataDescription)
    {
    case VTK_EMPTY:
-@@ -706,17 +712,6 @@ void vtkStructuredGrid::UnBlankCell(vtkIdType cellId)
+@@ -705,17 +711,6 @@ void vtkStructuredGrid::UnBlankCell(vtkIdType cellId)
+   }
  }
  
- //----------------------------------------------------------------------------
+-//----------------------------------------------------------------------------
 -unsigned char vtkStructuredGrid::IsPointVisible(vtkIdType pointId)
 -{
 -  vtkUnsignedCharArray* ghosts = this->GetPointGhostArray();
@@ -102,10 +84,9 @@ index 703265b77e..d82eb9190a 100644
 -  return 1;
 -}
 -
--//----------------------------------------------------------------------------
+ //----------------------------------------------------------------------------
  void vtkStructuredGrid::GetCellDims( int cellDims[3] )
  {
-   for( int i=0; i < 3; ++i )
 @@ -727,19 +722,8 @@ void vtkStructuredGrid::GetCellDims( int cellDims[3] )
  
  //----------------------------------------------------------------------------
@@ -146,13 +127,13 @@ index 703265b77e..d82eb9190a 100644
 +  this->PointGhostArrayPtrCached = true;
 +}
 diff --git a/Common/DataModel/vtkStructuredGrid.h b/Common/DataModel/vtkStructuredGrid.h
-index fbc688d53e..da93265f03 100644
+index 8b422f0148..f0665cf1ff 100644
 --- a/Common/DataModel/vtkStructuredGrid.h
 +++ b/Common/DataModel/vtkStructuredGrid.h
 @@ -258,6 +258,7 @@ protected:
     * only if the cache became invalid (ScalarRangeComputeTime).
     */
-   void ComputeScalarRange() VTK_OVERRIDE;
+   void ComputeScalarRange() override;
 +  unsigned char CellVisibleUsingPGA(vtkIdType cellId);
  
  private:
@@ -173,7 +154,7 @@ index fbc688d53e..da93265f03 100644
 +
  
  private:
-   vtkStructuredGrid(const vtkStructuredGrid&) VTK_DELETE_FUNCTION;
+   vtkStructuredGrid(const vtkStructuredGrid&) = delete;
 @@ -304,6 +315,51 @@ inline int vtkStructuredGrid::GetDataDimension()
    return vtkStructuredData::GetDataDimension(this->DataDescription);
  }
@@ -227,7 +208,7 @@ index fbc688d53e..da93265f03 100644
  
  
 diff --git a/Common/DataModel/vtkUniformGrid.cxx b/Common/DataModel/vtkUniformGrid.cxx
-index 1a483c4392..6b49b2b86e 100644
+index 6957295d09..682577c007 100644
 --- a/Common/DataModel/vtkUniformGrid.cxx
 +++ b/Common/DataModel/vtkUniformGrid.cxx
 @@ -316,7 +316,6 @@ vtkCell *vtkUniformGrid::GetCell(vtkIdType cellId)
@@ -235,7 +216,7 @@ index 1a483c4392..6b49b2b86e 100644
  vtkCell *vtkUniformGrid::GetCell(int iMin, int jMin, int kMin)
  {
 -  vtkIdType cellId = iMin + (jMin + (kMin * (this->Dimensions[1] - 1))) * (this->Dimensions[0] - 1);
-   vtkCell *cell = NULL;
+   vtkCell *cell = nullptr;
    int loc[3];
    vtkIdType idx, npts;
 @@ -339,6 +338,7 @@ vtkCell *vtkUniformGrid::GetCell(int iMin, int jMin, int kMin)
@@ -247,7 +228,7 @@ index 1a483c4392..6b49b2b86e 100644
    if (!this->IsCellVisible(cellId) )
    {
 diff --git a/Filters/Core/vtkThreshold.cxx b/Filters/Core/vtkThreshold.cxx
-index 5df337cb5f..b5c5052770 100644
+index b116134538..bd856559cd 100644
 --- a/Filters/Core/vtkThreshold.cxx
 +++ b/Filters/Core/vtkThreshold.cxx
 @@ -17,10 +17,14 @@
@@ -265,7 +246,7 @@ index 5df337cb5f..b5c5052770 100644
  #include "vtkUnstructuredGrid.h"
  #include "vtkStreamingDemandDrivenPipeline.h"
  #include "vtkMath.h"
-@@ -105,18 +109,6 @@ int vtkThreshold::RequestData(
+@@ -103,18 +107,6 @@ int vtkThreshold::RequestData(
    vtkUnstructuredGrid *output = vtkUnstructuredGrid::SafeDownCast(
      outInfo->Get(vtkDataObject::DATA_OBJECT()));
  
@@ -274,7 +255,7 @@ index 5df337cb5f..b5c5052770 100644
 -  vtkIdList *newCellPts;
 -  vtkCell *cell;
 -  vtkPoints *newPoints;
--  int i, ptId, newId, numPts;
+-  vtkIdType i, ptId, newId, numPts;
 -  int numCellPts;
 -  double x[3];
 -  vtkPointData *pd=input->GetPointData(), *outPD=output->GetPointData();
@@ -284,7 +265,7 @@ index 5df337cb5f..b5c5052770 100644
    vtkDebugMacro(<< "Executing threshold filter");
  
    if (this->AttributeMode != -1)
-@@ -133,18 +125,66 @@ int vtkThreshold::RequestData(
+@@ -131,18 +123,66 @@ int vtkThreshold::RequestData(
      return 1;
    }
  
@@ -359,7 +340,7 @@ index 5df337cb5f..b5c5052770 100644
    {
      vtkPointSet *inputPointSet = vtkPointSet::SafeDownCast(input);
      if(inputPointSet && inputPointSet->GetPoints())
-@@ -156,57 +196,77 @@ int vtkThreshold::RequestData(
+@@ -154,57 +194,77 @@ int vtkThreshold::RequestData(
        newPoints->SetDataType(VTK_FLOAT);
      }
    }
@@ -459,7 +440,7 @@ index 5df337cb5f..b5c5052770 100644
            }
          }
          else
-@@ -217,23 +277,26 @@ int vtkThreshold::RequestData(
+@@ -215,23 +275,26 @@ int vtkThreshold::RequestData(
      }
      else //use cell scalars
      {
@@ -494,7 +475,7 @@ index 5df337cb5f..b5c5052770 100644
        }
        // special handling for polyhedron cells
        if (vtkUnstructuredGrid::SafeDownCast(input) &&
-@@ -241,91 +304,186 @@ int vtkThreshold::RequestData(
+@@ -239,91 +302,186 @@ int vtkThreshold::RequestData(
        {
          newCellPts->Reset();
          vtkUnstructuredGrid::SafeDownCast(input)->
@@ -677,7 +658,7 @@ index 5df337cb5f..b5c5052770 100644
 -  for (int i=0; i < numCellPts; i++)
 +  for (int i = 0; i < numCellPts; ++i)
    {
-     int ptId = cellPts->GetId(i);
+     vtkIdType ptId = cellPts->GetId(i);
 -    double s = scalars->GetComponent(ptId,c);
 -    minScalar = std::min(s,minScalar);
 -    maxScalar = std::max(s,maxScalar);
@@ -714,7 +695,7 @@ index 5df337cb5f..b5c5052770 100644
        {
          keepCell =
            (this->*(this->ThresholdFunction))(scalars->GetComponent(id,c));
-@@ -333,7 +491,7 @@ int vtkThreshold::EvaluateComponents( vtkDataArray *scalars, vtkIdType id )
+@@ -331,7 +489,7 @@ int vtkThreshold::EvaluateComponents( vtkDataArray *scalars, vtkIdType id )
        break;
      case VTK_COMPONENT_MODE_USE_ALL:
        keepCell = 1;
@@ -723,7 +704,7 @@ index 5df337cb5f..b5c5052770 100644
        {
          keepCell =
            (this->*(this->ThresholdFunction))(scalars->GetComponent(id,c));
-@@ -347,11 +505,11 @@ int vtkThreshold::EvaluateComponents( vtkDataArray *scalars, vtkIdType id )
+@@ -345,11 +503,11 @@ int vtkThreshold::EvaluateComponents( vtkDataArray *scalars, vtkIdType id )
  // Return the method for manipulating scalar data as a string.
  const char *vtkThreshold::GetAttributeModeAsString(void)
  {
@@ -738,17 +719,17 @@ index 5df337cb5f..b5c5052770 100644
      return "UsePointData";
    }
 diff --git a/Filters/Core/vtkThreshold.h b/Filters/Core/vtkThreshold.h
-index c72b7cdf12..4d77baff12 100644
+index 3b88e569a1..2ec5ed392b 100644
 --- a/Filters/Core/vtkThreshold.h
 +++ b/Filters/Core/vtkThreshold.h
 @@ -192,6 +192,8 @@ protected:
  
-   int FillInputPortInformation(int port, vtkInformation *info) VTK_OVERRIDE;
+   int FillInputPortInformation(int port, vtkInformation *info) override;
  
 +  void DataSetExecute(vtkDataSet *input, vtkDataArray *inScalars, vtkUnstructuredGrid *output, bool usePointScalars);
 +  void StructuredExecute(vtkDataSet *input, vtkDataArray *inScalars, vtkUnstructuredGrid *output, int dims[3], bool usePointScalars);
  
-   int    AllScalars;
+   vtkTypeBool    AllScalars;
    double LowerThreshold;
 @@ -209,9 +211,9 @@ protected:
    int Between(double s) {return ( s >= this->LowerThreshold ?
@@ -761,8 +742,5 @@ index c72b7cdf12..4d77baff12 100644
 +  bool EvaluateCell( vtkDataArray *scalars, vtkIdList* cellPts, int numCellPts );
 +  bool EvaluateCell( vtkDataArray *scalars, int c, vtkIdList* cellPts, int numCellPts );
  private:
-   vtkThreshold(const vtkThreshold&) VTK_DELETE_FUNCTION;
-   void operator=(const vtkThreshold&) VTK_DELETE_FUNCTION;
--- 
-2.11.1
-
+   vtkThreshold(const vtkThreshold&) = delete;
+   void operator=(const vtkThreshold&) = delete;

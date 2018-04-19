@@ -1,20 +1,20 @@
 diff --git a/ParaViewCore/ClientServerCore/Rendering/vtkGeometryRepresentation.cxx b/ParaViewCore/ClientServerCore/Rendering/vtkGeometryRepresentation.cxx
-index 14e56e96ab..761c55d7b3 100644
+index 090cec6..e9b23fc 100644
 --- a/ParaViewCore/ClientServerCore/Rendering/vtkGeometryRepresentation.cxx
 +++ b/ParaViewCore/ClientServerCore/Rendering/vtkGeometryRepresentation.cxx
-@@ -344,6 +344,7 @@ int vtkGeometryRepresentation::ProcessViewRequest(
+@@ -329,6 +329,7 @@ int vtkGeometryRepresentation::ProcessViewRequest(
+     // that the bounds we report include the transformation as well.
      vtkNew<vtkMatrix4x4> matrix;
      this->Actor->GetMatrix(matrix.GetPointer());
-     vtkPVRenderView::SetGeometryBounds(inInfo, this->DataBounds, matrix.GetPointer());
 +    vtkPVRenderView::ConfigureGridAxes3DActor(inInfo, this->Actor);
+     vtkPVRenderView::SetGeometryBounds(inInfo, this->VisibleDataBounds, matrix.GetPointer());
    }
    else if (request_type == vtkPVView::REQUEST_UPDATE_LOD())
-   {
 diff --git a/ParaViewCore/ClientServerCore/Rendering/vtkPVRenderView.cxx b/ParaViewCore/ClientServerCore/Rendering/vtkPVRenderView.cxx
-index 2ae587306a..8d3c117218 100644
+index 94423f1..8691f82 100644
 --- a/ParaViewCore/ClientServerCore/Rendering/vtkPVRenderView.cxx
 +++ b/ParaViewCore/ClientServerCore/Rendering/vtkPVRenderView.cxx
-@@ -1812,6 +1812,25 @@ void vtkPVRenderView::SetGeometryBounds(
+@@ -1831,6 +1831,25 @@ void vtkPVRenderView::SetGeometryBounds(
  }
  
  //----------------------------------------------------------------------------
@@ -41,7 +41,7 @@ index 2ae587306a..8d3c117218 100644
    vtkInformation* info, vtkPVDataRepresentation* repr, vtkDataObject* piece)
  {
 diff --git a/ParaViewCore/ClientServerCore/Rendering/vtkPVRenderView.h b/ParaViewCore/ClientServerCore/Rendering/vtkPVRenderView.h
-index fd1e7fcd5d..e713ff5386 100644
+index a500dfb..3296685 100644
 --- a/ParaViewCore/ClientServerCore/Rendering/vtkPVRenderView.h
 +++ b/ParaViewCore/ClientServerCore/Rendering/vtkPVRenderView.h
 @@ -51,6 +51,7 @@ class vtkLightKit;
@@ -52,7 +52,7 @@ index fd1e7fcd5d..e713ff5386 100644
  class vtkPVAxesWidget;
  class vtkPVCameraCollection;
  class vtkPVCenterAxesActor;
-@@ -598,6 +599,10 @@ public:
+@@ -578,6 +579,10 @@ public:
     * Set the vtkPVGridAxes3DActor to use for the view.
     */
    virtual void SetGridAxes3DActor(vtkPVGridAxes3DActor*);
@@ -64,7 +64,7 @@ index fd1e7fcd5d..e713ff5386 100644
    //*****************************************************************
    // Forwarded to orientation axes widget.
 diff --git a/ParaViewCore/VTKExtensions/Default/vtkPVGridAxes3DActor.cxx b/ParaViewCore/VTKExtensions/Default/vtkPVGridAxes3DActor.cxx
-index fa9b5452be..ee1f849cb6 100644
+index 9bec209..9f81355 100644
 --- a/ParaViewCore/VTKExtensions/Default/vtkPVGridAxes3DActor.cxx
 +++ b/ParaViewCore/VTKExtensions/Default/vtkPVGridAxes3DActor.cxx
 @@ -17,6 +17,7 @@
@@ -81,7 +81,7 @@ index fa9b5452be..ee1f849cb6 100644
    this->DataPosition[0] = this->DataPosition[1] = this->DataPosition[2] = 0.0;
 +  this->DataOrigin[0] = this->DataOrigin[1] = this->DataOrigin[2] = 0.0;
 +  this->DataOrientation[0] = this->DataOrientation[1] = this->DataOrientation[2] = 0.0;
-   this->DataBoundsInflateFactor = 0;
+   this->DataBoundsScaleFactor = 1;
  
    this->TransformedBounds[0] = this->TransformedBounds[2] = this->TransformedBounds[4] = -1.0;
 @@ -87,12 +90,66 @@ void vtkPVGridAxes3DActor::UpdateGridBounds()
@@ -153,7 +153,7 @@ index fa9b5452be..ee1f849cb6 100644
  //----------------------------------------------------------------------------
  void vtkPVGridAxes3DActor::UpdateGridBoundsUsingDataBounds()
  {
-@@ -148,6 +205,8 @@ void vtkPVGridAxes3DActor::ShallowCopy(vtkProp* prop)
+@@ -150,6 +207,8 @@ void vtkPVGridAxes3DActor::ShallowCopy(vtkProp* prop)
    {
      this->SetDataScale(other->GetDataScale());
      this->SetDataPosition(other->GetDataPosition());
@@ -163,7 +163,7 @@ index fa9b5452be..ee1f849cb6 100644
      this->SetUseModelTransform(other->GetUseModelTransform());
      this->SetModelBounds(other->GetModelBounds());
 diff --git a/ParaViewCore/VTKExtensions/Default/vtkPVGridAxes3DActor.h b/ParaViewCore/VTKExtensions/Default/vtkPVGridAxes3DActor.h
-index 2332412d30..1b5fa5c37f 100644
+index 0c76d03..c3cb7d4 100644
 --- a/ParaViewCore/VTKExtensions/Default/vtkPVGridAxes3DActor.h
 +++ b/ParaViewCore/VTKExtensions/Default/vtkPVGridAxes3DActor.h
 @@ -66,6 +66,12 @@ public:
@@ -178,21 +178,21 @@ index 2332412d30..1b5fa5c37f 100644
 +
    //@{
    /**
-    * Specify the inflate factor used to proportionally
-@@ -93,6 +99,7 @@ public:
+    * Specify the scale factor used to proportionally
+@@ -91,6 +97,7 @@ public:
+    * Overridden to ensure that the transform information is passed on the
     * superclass.
     */
-   virtual double* GetBounds() VTK_OVERRIDE;
 +  void ComputeMatrix() VTK_OVERRIDE;
+   double* GetBounds() VTK_OVERRIDE;
  
  protected:
-   vtkPVGridAxes3DActor();
-@@ -105,6 +112,8 @@ protected:
+@@ -104,6 +111,8 @@ protected:
  
    double DataScale[3];
    double DataPosition[3];
 +  double DataOrigin[3];
 +  double DataOrientation[3];
-   double DataBoundsInflateFactor;
+   double DataBoundsScaleFactor;
    double TransformedBounds[6];
  
