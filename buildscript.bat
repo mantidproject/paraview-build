@@ -21,7 +21,7 @@ set MANTID_THIRD_PARTY=%1
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Set the ParaView version to build
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-set PV_VERSION=v5.4.1
+set PV_VERSION=v5.5.0
 set PV_VERSION3=%PV_VERSION:v=%
 echo Building ParaView %PV_VERSION%
 
@@ -78,10 +78,6 @@ cd %SRC_DIR%\%PARAVIEW_SRC%
 "%GitCmd%" config user.name "Bob T. Builder"
 "%GitCmd%" config user.email "builder@ornl.gov"
 "%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\1565.diff
-"%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\1850.diff
-"%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\1866.diff
-"%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\1882.diff
-"%GitCmd%" apply --ignore-whitespace %SCRIPT_DIR%\patches\remove-vtkguisupportqt-dep.diff
 cd %SRC_DIR%\%PARAVIEW_SRC%\VTK
 "%GitCmd%" config user.name "Bob T. Builder"
 "%GitCmd%" config user.email "builder@ornl.gov"
@@ -89,14 +85,14 @@ if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2527.diff
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2632.diff
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2693.diff
-"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\3134.diff
+"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\4208.diff
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Build ParaView
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Set path for Third party to find python & qmake.exe
 set THIRD_PARTY_LIB=!MANTID_THIRD_PARTY!\lib
-set PATH=!MANTID_THIRD_PARTY!\bin;!THIRD_PARTY_LIB!\qt4\bin;!THIRD_PARTY_LIB!\python2.7;%PATH%
+set PATH=!MANTID_THIRD_PARTY!\bin;!THIRD_PARTY_LIB!\qt5\bin;!THIRD_PARTY_LIB!\python2.7;%PATH%
 
 set BUILD_DIR=%~d0\Builds
 if not EXIST %BUILD_DIR% mkdir %BUILD_DIR%
@@ -167,9 +163,9 @@ if EXIST %SRC_DIR%\%PARAVIEW_SRC% (
   cd %PARAVIEW_SRC%
   :: remove any changes from previous patches
   call "%GitCmd%" reset --hard
-  call "%GitCmd%" submodule foreach git reset --hard
+  call "%GitCmd%" submodule foreach --recursive git reset --hard
   call "%GitCmd%" clean -xf
-  call "%GitCmd%" submodule foreach git clean -xf
+  call "%GitCmd%" submodule foreach --recursive git clean -xf
 ) else (
   call "%GitCmd%" clone %PV_GIT_URL% %PARAVIEW_SRC%
   cd %PARAVIEW_SRC%
