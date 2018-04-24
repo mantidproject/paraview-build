@@ -20,7 +20,7 @@
 SCRIPT_DIR=$( cd "$(dirname "${BASH_SOURCE[0]}" )" && pwd)
 
 # Set the ParaView version to build
-PV_VERSION=v5.4.1
+PV_VERSION=v5.5.0
 PV_VERSION2=${PV_VERSION%.*}
 PV_VERSION3=${PV_VERSION/v/}
 
@@ -76,16 +76,17 @@ else
  git fetch -p
  git fetch -t
  # RHEL6 has git 1.7 that doesn't know about submodule recursion
- git submodule foreach git fetch -p
- git submodule foreach git fetch -t
+ git submodule foreach --recursive git fetch -p
+ git submodule foreach --recursive git fetch -t
 fi
 #remove any changes from previous patches
 git reset --hard
-git submodule foreach git reset --hard
+git submodule foreach --recursive git reset --hard
 git clean -xf
-git submodule foreach git clean -xf
+git submodule foreach --recursive clean -xf
 git checkout ${PV_VERSION}
 git submodule update --init --recursive
+git submodule update --recursive
 git config user.name "Bob T. Builder"
 git config user.email "builder@ornl.gov"
 git apply ${SCRIPT_DIR}/patches/1565.diff
