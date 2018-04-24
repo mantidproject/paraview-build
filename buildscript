@@ -83,7 +83,7 @@ fi
 git reset --hard
 git submodule foreach --recursive git reset --hard
 git clean -xf
-git submodule foreach --recursive clean -xf
+git submodule foreach --recursive git clean -xf
 git checkout ${PV_VERSION}
 git submodule update --init --recursive
 git submodule update --recursive
