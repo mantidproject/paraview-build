@@ -39,6 +39,8 @@ set (HDF5_C_HL_LIBRARY ${BASE_LIB_DIR}/hdf5_hl.lib CACHE FILEPATH "")
 set (HDF5_CXX_LIBRARY ${BASE_LIB_DIR}/hdf5_cpp.lib CACHE FILEPATH "")
 set (HDF5_HL_CXX_LIBRARY ${BASE_LIB_DIR}/hdf5_hl_cpp.lib CACHE FILEPATH "")
 
+set (Qt5_DIR "$ENV{THIRD_PARTY_DIR}/lib/qt5/lib/cmake/Qt5" CACHE PATH "")
+
 ###############################################################################
 # System libraries
 ###############################################################################
