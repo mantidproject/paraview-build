@@ -12,7 +12,7 @@
 ###############################################################################
 set ( CMAKE_INCLUDE_PATH "$ENV{MANTID_THIRD_PARTY}/include" )
 set ( CMAKE_LIBRARY_PATH "$ENV{THIRD_PARTY_DIR}/lib" )
-set ( CMAKE_PREFIX_PATH "$ENV{THIRD_PARTY_DIR};$ENV{THIRD_PARTY_DIR}/lib/python2.7;$ENV{THIRD_PARTY_DIR}/lib/qt5" )
+set ( CMAKE_PREFIX_PATH "$ENV{THIRD_PARTY_DIR};$ENV{THIRD_PARTY_DIR}/lib/python2.7;$ENV{THIRD_PARTY_DIR}/lib/qt5/lib/cmake/Qt5" )
 
 set ( BASE_INCLUDE_DIR "$ENV{MANTID_THIRD_PARTY}/include" )
 set ( BASE_LIB_DIR "$ENV{MANTID_THIRD_PARTY}/lib" )
