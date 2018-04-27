@@ -28,9 +28,10 @@ echo Building ParaView %PV_VERSION%
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Setup visual studio
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+set SDK_VERSION=8.1
 set CMAKE_GENERATOR=Visual Studio 14 2015 Win64
 set BUILD_DIR_SUFFIX=-msvc2015-%PV_VERSION%
-call "%VS140COMNTOOLS%\..\..\VC\vcvarsall.bat" amd64
+call "%VS140COMNTOOLS%\..\..\VC\vcvarsall.bat" amd64 %SDK_VERSION%
 set UseEnv=true
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -127,7 +128,7 @@ echo SIGNALNAME %SIGNALNAME%
 set SIGNALHEADER=vtkArrayDispatch_extra_headers=%BUILD_DIR%\%PV_BUILD_DIR%\vtkMDHWSignalArray\vtkMDHWSignalArray.h
 echo SIGNALHEADER %SIGNALHEADER%
 ::Configure
-cmake -G "%CMAKE_GENERATOR%" -D%SIGNALNAME% -D%SIGNALHEADER% -C%COMMON_CACHE_FILE% -C%WINDOWS_CACHE_FILE% %SRC_DIR%\%PARAVIEW_SRC%
+cmake -G "%CMAKE_GENERATOR%" -DCMAKE_SYSTEM_VERSION=%SDK_VERSION% -D%SIGNALNAME% -D%SIGNALHEADER% -C%COMMON_CACHE_FILE% -C%WINDOWS_CACHE_FILE% %SRC_DIR%\%PARAVIEW_SRC%
 if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 
 ::Build
