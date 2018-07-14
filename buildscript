@@ -94,7 +94,7 @@ git apply ${SCRIPT_DIR}/patches/1866.diff
 git apply ${SCRIPT_DIR}/patches/1882.diff
 git apply ${SCRIPT_DIR}/patches/remove-vtkguisupportqt-dep.diff
 if [[ "$ON_OSX" == false ]]; then
-  git revert a99ea990a1bc34f072b50f794778e93595bcda8f
+  git revert --no-edit a99ea990a1bc34f072b50f794778e93595bcda8f
 fi
 git apply ${SCRIPT_DIR}/patches/2147.diff
 cd VTK
