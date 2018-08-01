@@ -67,7 +67,7 @@ CMAKE_PATCH_VERSION=$(echo $CMAKE_VERSION | cut -d. -f3)
 cd ${SRC_DIR}
 PARAVIEW_SRC=ParaView-${PV_VERSION}-source
 if [[ ! -d ${PARAVIEW_SRC} ]]; then
- git clone https://gitlab.kitware.com/paraview/paraview.git ${PARAVIEW_SRC}
+ git clone --branch ${PV_VERSION} https://gitlab.kitware.com/paraview/paraview.git ${PARAVIEW_SRC}
  cd ${PARAVIEW_SRC}
 else
  cd ${PARAVIEW_SRC}
@@ -80,7 +80,7 @@ else
  git submodule foreach git fetch -t
 fi
 #remove any changes from previous patches
-git reset --hard
+git reset --hard ${PV_VERSION}
 git submodule foreach git reset --hard
 git clean -xf
 git submodule foreach git clean -xf
