@@ -27,7 +27,7 @@ PV_VERSION3=${PV_VERSION/v/}
 # Set the source and build directories
 BUILDER=builder
 
-if [[ $(uname) == "Darwin" ]]; then
+if [[ ${NODE_LABELS} == *osx* ]]; then
   ON_OSX=true
   HOME_DIR=/Users/${BUILDER}
   OSX_VERSION=$(sw_vers -productVersion)
@@ -37,7 +37,9 @@ if [[ $(uname) == "Darwin" ]]; then
   OSX_PATCH_VERSION=$(echo $OSX_VERSION | cut -d. -f3)
 else
   HOME_DIR=/home/${BUILDER}
-  ON_OSX=false
+fi
+if [[ ${NODE_LABELS} == *rhel7* ]]; then
+  ON_RHEL7=true
 fi
 
 SRC_DIR=${HOME_DIR}/src
@@ -93,7 +95,7 @@ git apply ${SCRIPT_DIR}/patches/1850.diff
 git apply ${SCRIPT_DIR}/patches/1866.diff
 git apply ${SCRIPT_DIR}/patches/1882.diff
 git apply ${SCRIPT_DIR}/patches/remove-vtkguisupportqt-dep.diff
-if [[ "$ON_OSX" == false ]]; then
+if [[ "${ON_RHEL7}" == true ]]; then
   git revert --no-edit a99ea990a1bc34f072b50f794778e93595bcda8f
 fi
 git apply ${SCRIPT_DIR}/patches/2147.diff
