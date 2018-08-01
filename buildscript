@@ -140,28 +140,41 @@ cp ${SCRIPT_DIR}/vtkMDHWSignalArray/vtkMDHWSignalArray.h vtkMDHWSignalArray
 SIGNAL_NAME=vtkArrayDispatch_extra_arrays=vtkMDHWSignalArray\\\<double\\\>
 SIGNAL_HEADER=vtkArrayDispatch_extra_headers=${BUILD_DIR}/${PARAVIEW_BUILD}/vtkMDHWSignalArray/vtkMDHWSignalArray.h
 
+# wrap cmake call with appropriate devtoolset
 if [[ ${NODE_LABELS} == *rhel6* ]]; then
-  SCL_ON_RHEL6="scl enable mantidlibs34 devtoolset-2"
+  SCL_ON_RHEL="scl enable mantidlibs34 devtoolset-2"
 else
-  SCL_ON_RHEL6="eval"
+  SCL_ON_RHEL="eval"
 fi
 
+# determine the cmake generator
+if [ "$(command -v ninja)" ]; then
+  CMAKE_GENERATOR="-G Ninja"
+elif [ "$(command -v ninja-build)" ]; then
+  CMAKE_GENERATOR="-G Ninja"
+fi
+if [ -e $BUILD_DIR/CMakeCache.txt ]; then
+  CMAKE_GENERATOR=""
+fi
+
+# configure
 if [[ "$ON_OSX" == true ]]; then
   if [[ "$PY3" == true ]]; then
-    $SCL_ON_RHEL6 "${CMAKE_EXE} -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${OSX_CACHE_FILE} -C${OSX_PYTHON_CACHE_FILE} -C${PYTHON3_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
+    $SCL_ON_RHEL "${CMAKE_EXE} ${CMAKE_GENERATOR} -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${OSX_CACHE_FILE} -C${OSX_PYTHON_CACHE_FILE} -C${PYTHON3_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
   else
     if [[ "$OSX_MINOR_VERSON" -gt "10" ]]; then
-      $SCL_ON_RHEL6 "${CMAKE_EXE} -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${OSX_CACHE_FILE} -C${OSX_PYTHON_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
+      $SCL_ON_RHEL "${CMAKE_EXE} ${CMAKE_GENERATOR} -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${OSX_CACHE_FILE} -C${OSX_PYTHON_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
     else
-      $SCL_ON_RHEL6 "${CMAKE_EXE} -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${OSX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
+      $SCL_ON_RHEL "${CMAKE_EXE} ${CMAKE_GENERATOR} -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${OSX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
     fi
   fi
-else
+else # on linux
     if [[ "${PY3}" == true ]]; then
-	$SCL_ON_RHEL6 "${CMAKE_EXE} -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${LINUX_CACHE_FILE} -C${PYTHON3_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
+	$SCL_ON_RHEL "${CMAKE_EXE} ${CMAKE_GENERATOR} -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${LINUX_CACHE_FILE} -C${PYTHON3_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
     else
-	$SCL_ON_RHEL6 "${CMAKE_EXE} -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${LINUX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
+	$SCL_ON_RHEL "${CMAKE_EXE} ${CMAKE_GENERATOR} -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${LINUX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
     fi
 fi
 
-$SCL_ON_RHEL6 "${CMAKE_EXE} --build . -- -j ${BUILD_THREADS}"
+# build
+${CMAKE_EXE} --build . -- -j ${BUILD_THREADS:?}
