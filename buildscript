@@ -27,7 +27,7 @@ PV_VERSION3=${PV_VERSION/v/}
 # Set the source and build directories
 BUILDER=builder
 
-if [[ $(uname) == "Darwin" ]]; then
+if [[ ${NODE_LABELS} == *osx* ]]; then
   ON_OSX=true
   HOME_DIR=/Users/${BUILDER}
   OSX_VERSION=$(sw_vers -productVersion)
@@ -37,7 +37,9 @@ if [[ $(uname) == "Darwin" ]]; then
   OSX_PATCH_VERSION=$(echo $OSX_VERSION | cut -d. -f3)
 else
   HOME_DIR=/home/${BUILDER}
-  ON_OSX=false
+fi
+if [[ ${NODE_LABELS} == *rhel7* ]] || [[ ${NODE_LABELS} == *centos7* ]] || [[ ${NODE_LABELS} == *scilin7* ]]; then
+  ON_RHEL7=true
 fi
 
 SRC_DIR=${HOME_DIR}/src
@@ -67,7 +69,7 @@ CMAKE_PATCH_VERSION=$(echo $CMAKE_VERSION | cut -d. -f3)
 cd ${SRC_DIR}
 PARAVIEW_SRC=ParaView-${PV_VERSION}-source
 if [[ ! -d ${PARAVIEW_SRC} ]]; then
- git clone https://gitlab.kitware.com/paraview/paraview.git ${PARAVIEW_SRC}
+ git clone --branch ${PV_VERSION} https://gitlab.kitware.com/paraview/paraview.git ${PARAVIEW_SRC}
  cd ${PARAVIEW_SRC}
 else
  cd ${PARAVIEW_SRC}
@@ -80,7 +82,7 @@ else
  git submodule foreach git fetch -t
 fi
 #remove any changes from previous patches
-git reset --hard
+git reset --hard ${PV_VERSION}
 git submodule foreach git reset --hard
 git clean -xf
 git submodule foreach git clean -xf
@@ -93,7 +95,7 @@ git apply ${SCRIPT_DIR}/patches/1850.diff
 git apply ${SCRIPT_DIR}/patches/1866.diff
 git apply ${SCRIPT_DIR}/patches/1882.diff
 git apply ${SCRIPT_DIR}/patches/remove-vtkguisupportqt-dep.diff
-if [[ "$ON_OSX" == false ]]; then
+if [[ "${ON_RHEL7}" == true ]]; then
   git revert --no-edit a99ea990a1bc34f072b50f794778e93595bcda8f
 fi
 git apply ${SCRIPT_DIR}/patches/2147.diff
@@ -140,28 +142,41 @@ cp ${SCRIPT_DIR}/vtkMDHWSignalArray/vtkMDHWSignalArray.h vtkMDHWSignalArray
 SIGNAL_NAME=vtkArrayDispatch_extra_arrays=vtkMDHWSignalArray\\\<double\\\>
 SIGNAL_HEADER=vtkArrayDispatch_extra_headers=${BUILD_DIR}/${PARAVIEW_BUILD}/vtkMDHWSignalArray/vtkMDHWSignalArray.h
 
+# wrap cmake call with appropriate devtoolset
 if [[ ${NODE_LABELS} == *rhel6* ]]; then
-  SCL_ON_RHEL6="scl enable mantidlibs34 devtoolset-2"
+  SCL_ON_RHEL="scl enable mantidlibs34 devtoolset-2"
 else
-  SCL_ON_RHEL6="eval"
+  SCL_ON_RHEL="eval"
 fi
 
+# determine the cmake generator
+if [ "$(command -v ninja)" ]; then
+  CMAKE_GENERATOR="-G Ninja"
+elif [ "$(command -v ninja-build)" ]; then
+  CMAKE_GENERATOR="-G Ninja"
+fi
+if [ -e $BUILD_DIR/CMakeCache.txt ]; then
+  CMAKE_GENERATOR=""
+fi
+
+# configure
 if [[ "$ON_OSX" == true ]]; then
   if [[ "$PY3" == true ]]; then
-    $SCL_ON_RHEL6 "${CMAKE_EXE} -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${OSX_CACHE_FILE} -C${OSX_PYTHON_CACHE_FILE} -C${PYTHON3_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
+    $SCL_ON_RHEL "${CMAKE_EXE} ${CMAKE_GENERATOR} -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${OSX_CACHE_FILE} -C${OSX_PYTHON_CACHE_FILE} -C${PYTHON3_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
   else
     if [[ "$OSX_MINOR_VERSON" -gt "10" ]]; then
-      $SCL_ON_RHEL6 "${CMAKE_EXE} -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${OSX_CACHE_FILE} -C${OSX_PYTHON_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
+      $SCL_ON_RHEL "${CMAKE_EXE} ${CMAKE_GENERATOR} -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${OSX_CACHE_FILE} -C${OSX_PYTHON_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
     else
-      $SCL_ON_RHEL6 "${CMAKE_EXE} -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${OSX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
+      $SCL_ON_RHEL "${CMAKE_EXE} ${CMAKE_GENERATOR} -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${OSX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
     fi
   fi
-else
+else # on linux
     if [[ "${PY3}" == true ]]; then
-	$SCL_ON_RHEL6 "${CMAKE_EXE} -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${LINUX_CACHE_FILE} -C${PYTHON3_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
+	$SCL_ON_RHEL "${CMAKE_EXE} ${CMAKE_GENERATOR} -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${LINUX_CACHE_FILE} -C${PYTHON3_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
     else
-	$SCL_ON_RHEL6 "${CMAKE_EXE} -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${LINUX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
+	$SCL_ON_RHEL "${CMAKE_EXE} ${CMAKE_GENERATOR} -D${SIGNAL_NAME} -D${SIGNAL_HEADER} -C${COMMON_CACHE_FILE} -C${LINUX_CACHE_FILE} ${SRC_DIR}/${PARAVIEW_SRC}"
     fi
 fi
 
-$SCL_ON_RHEL6 "${CMAKE_EXE} --build . -- -j ${BUILD_THREADS}"
+# build
+${CMAKE_EXE} --build . -- -j ${BUILD_THREADS:?}
