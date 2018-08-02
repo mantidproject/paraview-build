@@ -38,7 +38,7 @@ if [[ ${NODE_LABELS} == *osx* ]]; then
 else
   HOME_DIR=/home/${BUILDER}
 fi
-if [[ ${NODE_LABELS} == *rhel7* ]]; then
+if [[ ${NODE_LABELS} == *rhel7* ]] || [[ ${NODE_LABELS} == *centos7* ]] || [[ ${NODE_LABELS} == *scilin7* ]]; then
   ON_RHEL7=true
 fi
 
