@@ -81,6 +81,20 @@ else
  git submodule foreach git fetch -p
  git submodule foreach git fetch -t
 fi
+
+# Determine the version of JsonCpp we have
+JSONCPP_VERSION_H=`find /usr/include/ /usr/local/include/ -path "*/json*" -name "version.h"`
+if [ -e ${JSONCPP_VERSION_H} ]; then
+  JSONCPP_VERSION_MAJOR=`cat ${JSONCPP_VERSION_H} | sed -n "s/.*JSONCPP_VERSION_MAJOR[ tab]*\([0-9]\)/\1/p"`
+  JSONCPP_VERSION_MINOR=`cat ${JSONCPP_VERSION_H} | sed -n "s/.*JSONCPP_VERSION_MINOR[ tab]*\([0-9]\)/\1/p"`
+  JSONCPP_VERSION_PATCH=`cat ${JSONCPP_VERSION_H} | sed -n "s/.*JSONCPP_VERSION_PATCH[ tab]*\([0-9]\)/\1/p"`
+  JSONCPP_VERSION_MAJOR=`printf "%03d" ${JSONCPP_VERSION_MAJOR}`
+  JSONCPP_VERSION_MINOR=`printf "%03d" ${JSONCPP_VERSION_MINOR}`
+  JSONCPP_VERSION_PATCH=`printf "%03d" ${JSONCPP_VERSION_PATCH}`
+  JSONCPP_VERSION=${JSONCPP_VERSION_MAJOR}${JSONCPP_VERSION_MINOR}${JSONCPP_VERSION_PATCH}
+  echo "Found JsonCpp version ${JSONCPP_VERSION} from ${JSONCPP_VERSION_H}"
+fi
+
 #remove any changes from previous patches
 git reset --hard ${PV_VERSION}
 git submodule foreach git reset --hard
@@ -95,7 +109,7 @@ git apply ${SCRIPT_DIR}/patches/1850.diff
 git apply ${SCRIPT_DIR}/patches/1866.diff
 git apply ${SCRIPT_DIR}/patches/1882.diff
 git apply ${SCRIPT_DIR}/patches/remove-vtkguisupportqt-dep.diff
-if [[ "${ON_RHEL7}" == true ]]; then
+if [ -e ${JSONCPP_VERSION_H} ] && (( ${JSONCPP_VERSION_MAJOR} < 001007004 )); then
   git revert --no-edit a99ea990a1bc34f072b50f794778e93595bcda8f
 fi
 git apply ${SCRIPT_DIR}/patches/2147.diff
