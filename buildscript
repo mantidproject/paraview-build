@@ -25,28 +25,23 @@ PV_VERSION2=${PV_VERSION%.*}
 PV_VERSION3=${PV_VERSION/v/}
 
 # Set the source and build directories
-BUILDER=builder
-
 if [[ ${NODE_LABELS} == *osx* ]]; then
   ON_OSX=true
-  HOME_DIR=/Users/${BUILDER}
   OSX_VERSION=$(sw_vers -productVersion)
   echo "Using OS X version ${OSX_VERSION}"
   OSX_MAJOR_VERSION=$(echo $OSX_VERSION | cut -d. -f1)
   OSX_MINOR_VERSION=$(echo $OSX_VERSION | cut -d. -f2)
   OSX_PATCH_VERSION=$(echo $OSX_VERSION | cut -d. -f3)
-else
-  HOME_DIR=/home/${BUILDER}
 fi
 if [[ ${NODE_LABELS} == *rhel7* ]] || [[ ${NODE_LABELS} == *centos7* ]] || [[ ${NODE_LABELS} == *scilin7* ]]; then
   ON_RHEL7=true
 fi
 
-SRC_DIR=${HOME_DIR}/src
+SRC_DIR=${HOME}/src
 if [ $# -eq "1" ]; then
   BUILD_DIR=$1
 else
-  BUILD_DIR=${HOME_DIR}/build
+  BUILD_DIR=${HOME}/build
 fi
 
 # Parse cmake version - we use cmake3 on rhel because cmake is too old
