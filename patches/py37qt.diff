@@ -1,0 +1,13 @@
+diff --git a/Qt/Python/pqPythonSyntaxHighlighter.cxx b/Qt/Python/pqPythonSyntaxHighlighter.cxx
+index 70ef2cf1e7..09a221cbf2 100644
+--- a/Qt/Python/pqPythonSyntaxHighlighter.cxx
++++ b/Qt/Python/pqPythonSyntaxHighlighter.cxx
+@@ -190,7 +190,7 @@ void pqPythonSyntaxHighlighter::rehighlightSyntax()
+     vtkSmartPyObject resultingTextBytes(PyUnicode_AsUTF8String(resultingText));
+     char* resultingTextAsCString = PyString_AsString(resultingTextBytes);
+ #else
+-    char* resultingTextAsCString = PyUnicode_AsUTF8(resultingText);
++    char* resultingTextAsCString = const_cast<char*>(PyUnicode_AsUTF8(resultingText));
+ #endif
+ 
+     QString pygmentsOutput = QString::fromUtf8(resultingTextAsCString);

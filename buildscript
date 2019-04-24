@@ -104,6 +104,7 @@ git apply ${SCRIPT_DIR}/patches/1850.diff
 git apply ${SCRIPT_DIR}/patches/1866.diff
 git apply ${SCRIPT_DIR}/patches/1882.diff
 git apply ${SCRIPT_DIR}/patches/remove-vtkguisupportqt-dep.diff
+git apply ${SCRIPT_DIR}/patches/py37qt.diff
 if [ -e ${JSONCPP_VERSION_H} ] && (( ${JSONCPP_VERSION} < 001007004 )); then
   git revert --no-edit a99ea990a1bc34f072b50f794778e93595bcda8f
 fi
@@ -115,6 +116,7 @@ git apply ${SCRIPT_DIR}/patches/2527.diff
 git apply ${SCRIPT_DIR}/patches/2632.diff
 git apply ${SCRIPT_DIR}/patches/2693.diff
 git apply ${SCRIPT_DIR}/patches/3134.diff
+git apply ${SCRIPT_DIR}/patches/py37vtk.diff
 
 # Go to build area, setup and run
 cd ${BUILD_DIR}
