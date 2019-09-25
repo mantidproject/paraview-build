@@ -78,7 +78,7 @@ else
 fi
 
 # Determine the version of JsonCpp we have
-JSONCPP_VERSION_H=`find /usr/include/ /usr/local/include/ -path "*/json*" -name "version.h"`
+JSONCPP_VERSION_H=`find -L /usr/include/ /usr/local/include/ -path "*/json*" -name "version.h"`
 if [ -e ${JSONCPP_VERSION_H} ]; then
   JSONCPP_VERSION_MAJOR=`cat ${JSONCPP_VERSION_H} | sed -n "s/.*JSONCPP_VERSION_MAJOR[ tab]*\([0-9]\)/\1/p"`
   JSONCPP_VERSION_MINOR=`cat ${JSONCPP_VERSION_H} | sed -n "s/.*JSONCPP_VERSION_MINOR[ tab]*\([0-9]\)/\1/p"`
