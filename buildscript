@@ -32,9 +32,18 @@ if [[ ${NODE_LABELS} == *osx* ]]; then
   OSX_MAJOR_VERSION=$(echo $OSX_VERSION | cut -d. -f1)
   OSX_MINOR_VERSION=$(echo $OSX_VERSION | cut -d. -f2)
   OSX_PATCH_VERSION=$(echo $OSX_VERSION | cut -d. -f3)
+  SYSTEM_THREADS=`sysctl -n hw.physicalcpu`
+else
+  SYSTEM_THREADS=`nproc`
 fi
 if [[ ${NODE_LABELS} == *rhel7* ]] || [[ ${NODE_LABELS} == *centos7* ]] || [[ ${NODE_LABELS} == *scilin7* ]]; then
   ON_RHEL7=true
+fi
+
+# If for whatever reason this is not set then default to the number of cores
+# for the system
+if [[ -z ${BUILD_THREADS+x} ]]; then
+  BUILD_THREADS=${SYSTEM_THREADS}
 fi
 
 SRC_DIR=${HOME}/src
