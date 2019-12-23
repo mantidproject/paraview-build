@@ -93,7 +93,7 @@ if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2693.diff
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\3134.diff
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\add-h5_build_as_dynamic.patch
-"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\4489.diff
+"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\cast-around-py3-error.diff
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Build ParaView
