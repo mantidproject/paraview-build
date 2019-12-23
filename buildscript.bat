@@ -93,6 +93,7 @@ if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2693.diff
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\3134.diff
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\add-h5_build_as_dynamic.patch
+"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\4489.diff
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Build ParaView
@@ -153,7 +154,7 @@ if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 
 ::Build
 if not DEFINED BUILD_THREADS set BUILD_THREADS=8
-msbuild /nologo /m:!BUILD_THREADS! /nr:false /p:Configuration=Release ALL_BUILD.vcxproj
+cmake --build . -- /nologo /m:!BUILD_THREADS! /nr:false /p:Configuration=Release
 if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 
 :: done
