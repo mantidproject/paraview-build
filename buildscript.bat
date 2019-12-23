@@ -99,13 +99,28 @@ if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Set path for Third party to find python & qmake.exe
 set THIRD_PARTY_LIB=!MANTID_THIRD_PARTY!\lib
-set PATH=!MANTID_THIRD_PARTY!\bin;!THIRD_PARTY_LIB!\qt4\bin;!THIRD_PARTY_LIB!\python2.7;%PATH%
+set EXTRA_PATH=!MANTID_THIRD_PARTY!\bin;!THIRD_PARTY_LIB!\qt4\bin;
+if not "%JOB_NAME%" == "%JOB_NAME:python3=%" (
+  set PY3=1
+  echo Python 3 build
+  set EXTRA_PATH=!EXTRA_PATH!;!THIRD_PARTY_LIB!\python3.8
+) else (
+  echo Python 2 build
+  set EXTRA_PATH=!EXTRA_PATH!;!THIRD_PARTY_LIB!\python2.7
+)
+
+set PATH=!EXTRA_PATH!;%PATH%
 
 set BUILD_DIR=%~d0\Builds
 if not EXIST %BUILD_DIR% mkdir %BUILD_DIR%
 cd /D %BUILD_DIR%
 
-set PV_BUILD_DIR=ParaView-%PV_VERSION3%
+if "%PY3%" == "1" (
+  set PV_BUILD_DIR=ParaView-%PV_VERSION3%-python3
+) else (
+  set PV_BUILD_DIR=ParaView-%PV_VERSION3%
+)
+echo Building in %PV_BUILD_DIR%
 if not "%CLEAN%" == "%CLEAN:true=%" (
   echo Removing %PV_BUILD_DIR%
   rmdir /S /Q %PV_BUILD_DIR%
@@ -116,7 +131,11 @@ if not EXIST %PV_BUILD_DIR% (
 cd %PV_BUILD_DIR%
 
 set COMMON_CACHE_FILE=%SCRIPT_DIR%common.cmake
-set WINDOWS_CACHE_FILE=%SCRIPT_DIR%msvc-2015.cmake
+if "%PY3%" == "1" (
+  set WINDOWS_CACHE_FILE=%SCRIPT_DIR%msvc-2015-python3.cmake
+) else (
+  set WINDOWS_CACHE_FILE=%SCRIPT_DIR%msvc-2015.cmake
+)
 echo Using CMake cache files '%COMMON_CACHE_FILE%' '%WINDOWS_CACHE_FILE%'
 cmake --version
 
@@ -146,7 +165,7 @@ goto:eof
 :fetch-thirdparty
 set TP_DEST_DIR=%1
 set TP_GIT_URL=https://github.com/mantidproject/thirdparty-msvc2015.git
-set TP_BRANCH=master
+set TP_BRANCH=python3-bundle
 set _curdir=%CD%
 if not exist %TP_DEST_DIR%\.git (
   call "%GitCmd%" clone %TP_GIT_URL% %TP_DEST_DIR%
