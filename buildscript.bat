@@ -92,6 +92,7 @@ if ERRORLEVEL 1 exit /B %ERRORLEVEL%
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2632.diff
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\2693.diff
 "%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\3134.diff
+"%GitCmd%" apply --whitespace=fix %SCRIPT_DIR%\patches\add-h5_build_as_dynamic.patch
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: Build ParaView

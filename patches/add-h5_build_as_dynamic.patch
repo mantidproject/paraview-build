@@ -1,0 +1,11 @@
+diff --git a/ThirdParty/hdf5/module.cmake b/ThirdParty/hdf5/module.cmake
+index fdb25428ae..53f80e5a19 100644
+--- a/ThirdParty/hdf5/module.cmake
++++ b/ThirdParty/hdf5/module.cmake
+@@ -1,5 +1,6 @@
+ if(BUILD_SHARED_LIBS)
+   set(HDF5_USE_STATIC_LIBS FALSE)
++  add_definitions(-DH5_BUILT_AS_DYNAMIC_LIB=1)
+ else()
+   set(HDF5_USE_STATIC_LIBS ON)
+ endif()
