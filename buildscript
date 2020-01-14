@@ -32,6 +32,7 @@ if [[ ${NODE_LABELS} == *osx* ]]; then
   OSX_MAJOR_VERSION=$(echo $OSX_VERSION | cut -d. -f1)
   OSX_MINOR_VERSION=$(echo $OSX_VERSION | cut -d. -f2)
   OSX_PATCH_VERSION=$(echo $OSX_VERSION | cut -d. -f3)
+  export PATH=/usr/local/Cellar/qt@4/4.8.7_5/bin/qmake:$PATH
 fi
 if [[ ${NODE_LABELS} == *rhel7* ]] || [[ ${NODE_LABELS} == *centos7* ]] || [[ ${NODE_LABELS} == *scilin7* ]]; then
   ON_RHEL7=true
@@ -104,6 +105,7 @@ git apply ${SCRIPT_DIR}/patches/1850.diff
 git apply ${SCRIPT_DIR}/patches/1866.diff
 git apply ${SCRIPT_DIR}/patches/1882.diff
 git apply ${SCRIPT_DIR}/patches/remove-vtkguisupportqt-dep.diff
+git apply ${SCRIPT_DIR}/patches/pqPythonSyntaxHighlighter-py3.diff
 if [ -e ${JSONCPP_VERSION_H} ] && (( ${JSONCPP_VERSION} < 001007004 )); then
   git revert --no-edit a99ea990a1bc34f072b50f794778e93595bcda8f
 fi
@@ -115,7 +117,10 @@ git apply ${SCRIPT_DIR}/patches/2527.diff
 git apply ${SCRIPT_DIR}/patches/2632.diff
 git apply ${SCRIPT_DIR}/patches/2693.diff
 git apply ${SCRIPT_DIR}/patches/3134.diff
-git apply apply ${SCRIPT_DIR}/patches/4489.diff
+git apply ${SCRIPT_DIR}/patches/cast-around-py3-error.diff
+if [[ "$ON_OSX" == true ]]; then
+  git apply ${SCRIPT_DIR}/patches/homebrew-find-qt4.diff
+fi
 
 # Go to build area, setup and run
 cd ${BUILD_DIR}
