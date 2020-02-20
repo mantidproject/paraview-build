@@ -12,19 +12,19 @@
 ###############################################################################
 set ( CMAKE_INCLUDE_PATH "$ENV{MANTID_THIRD_PARTY}/include" )
 set ( CMAKE_LIBRARY_PATH "$ENV{THIRD_PARTY_DIR}/lib" )
-set ( CMAKE_PREFIX_PATH "$ENV{THIRD_PARTY_DIR};$ENV{THIRD_PARTY_DIR}/lib/python2.7;$ENV{THIRD_PARTY_DIR}/lib/qt4" )
+set ( CMAKE_PREFIX_PATH "$ENV{THIRD_PARTY_DIR};$ENV{THIRD_PARTY_DIR}/lib/python3.8;$ENV{THIRD_PARTY_DIR}/lib/qt4" )
 
 set ( BASE_INCLUDE_DIR "$ENV{MANTID_THIRD_PARTY}/include" )
 set ( BASE_LIB_DIR "$ENV{MANTID_THIRD_PARTY}/lib" )
-set ( PYTHON_DIR ${BASE_LIB_DIR}/python2.7 )
+set ( PYTHON_DIR ${BASE_LIB_DIR}/python3.8 )
 
 # It didn't seem possible to get this working with a *-config files. It looks like find_package does something
 # slightly different depending on whether the CONFIGS argument is passed or not. If the argument is not present (like in ParaView) then
 # the result gives back the .dll files, which cannot be linked to. We resort to specifying the paths manually.
 
 # Python
-set (PYTHON_INCLUDE_DIR "${BASE_LIB_DIR}/python2.7/Include" CACHE PATH "")
-set (PYTHON_LIBRARY ${PYTHON_DIR}/libs/python27.lib CACHE FILEPATH "")
+set (PYTHON_INCLUDE_DIR "${BASE_LIB_DIR}/python3.8/Include" CACHE PATH "")
+set (PYTHON_LIBRARY ${PYTHON_DIR}/libs/python38.lib CACHE FILEPATH "")
 # # zlib
 set (ZLIB_INCLUDE_DIR ${BASE_INCLUDE_DIR} CACHE PATH "")
 set (ZLIB_LIBRARY ${BASE_LIB_DIR}/zlib.lib CACHE FILEPATH "")

@@ -1,0 +1,12 @@
+diff --git a/GUISupport/Qt/CMakeLists.txt b/GUISupport/Qt/CMakeLists.txt
+index 8eea09dda3..f3f83ef1a9 100644
+--- a/GUISupport/Qt/CMakeLists.txt
++++ b/GUISupport/Qt/CMakeLists.txt
+@@ -83,6 +83,7 @@ if(VTK_QT_VERSION VERSION_GREATER "4")
+   # When this module is loaded by an app, load Qt too.
+   vtk_module_export_code_find_package(Qt5 COMPONENTS Widgets)
+ else()
++  list(APPEND CMAKE_PREFIX_PATH /usr/local/opt/qt@4)
+   # import Qt4 build settings
+   find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED QUIET)
+   mark_as_advanced(QT_QMAKE_EXECUTABLE)
