@@ -167,7 +167,7 @@ goto:eof
 :fetch-thirdparty
 set TP_DEST_DIR=%1
 set TP_GIT_URL=https://github.com/mantidproject/thirdparty-msvc2015.git
-set TP_BRANCH=python3-bundle
+set TP_BRANCH=master
 set _curdir=%CD%
 if not exist %TP_DEST_DIR%\.git (
   call "%GitCmd%" clone %TP_GIT_URL% %TP_DEST_DIR%
