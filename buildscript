@@ -120,6 +120,7 @@ git apply ${SCRIPT_DIR}/patches/3134.diff
 git apply ${SCRIPT_DIR}/patches/cast-around-py3-error.diff
 if [[ "$ON_OSX" == true ]]; then
   git apply ${SCRIPT_DIR}/patches/homebrew-find-qt4.diff
+  git apply ${SCRIPT_DIR}/patches/update-netcdf.diff
 fi
 
 # Go to build area, setup and run
